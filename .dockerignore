@@ -1,0 +1,43 @@
+# Build artifacts
+target/
+**/*.rs.bk
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# CI/CD
+.github/
+.travis.yml
+.appveyor.yml
+
+# Test artifacts
+test-cluster/
+*.log
+
+# Configuration files (may contain secrets)
+config.toml
+ferrite.toml
+
+# Development scripts
+test-cluster.sh
+*.sh
+
+# Temporary files
+tmp/
+*.tmp
+*.temp 

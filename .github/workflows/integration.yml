@@ -1,0 +1,132 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --release
+
+    - name: Run integration tests (including ignored)
+      run: cargo test --test integration_test --verbose -- --include-ignored
+
+  cluster-tests:
+    name: Cluster Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --release
+
+    - name: Make test script executable
+      run: chmod +x test-cluster.sh
+
+    - name: Run cluster integration tests
+      run: |
+        echo "🚀 Starting cluster integration tests..."
+        ./test-cluster.sh
+      timeout-minutes: 8
+
+    - name: Cleanup processes
+      if: always()
+      run: |
+        echo "🧹 Cleaning up any remaining processes..."
+        pkill -f ferrite-server || true
+        # Wait a moment for graceful shutdown
+        sleep 2
+        # Force kill if needed
+        pkill -9 -f ferrite-server || true
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'performance')
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build optimized binary
+      run: cargo build --release
+
+    - name: Run performance tests
+      run: |
+        echo "⚡ Running performance tests..."
+        # Run the large dataset performance test
+        cargo test --release test_large_dataset_performance -- --nocapture
+
+    - name: Run cluster performance test
+      run: |
+        echo "⚡ Running cluster performance tests..."
+        chmod +x test-cluster.sh
+        
+        # Set environment variable for performance testing
+        export FERRITE_PERF_TEST=1
+        ./test-cluster.sh
+      timeout-minutes: 15
+
+  memory-tests:
+    name: Memory Safety Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: miri
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: nightly-miri
+
+    - name: Setup miri
+      run: cargo miri setup
+
+    - name: Run miri tests (basic)
+      run: |
+        # Run a subset of tests with miri (it's slow)
+        cargo miri test test_config_creation
+        cargo miri test test_client_creation
+        cargo miri test test_binary_key_conversion_helpers
+      continue-on-error: true  # Miri can be flaky 

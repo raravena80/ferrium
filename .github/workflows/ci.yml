@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: ${{ matrix.rust }}
+
+    - name: Run unit tests
+      run: cargo test --lib --verbose
+
+    - name: Run binary tests
+      run: cargo test --bin ferrite-server --verbose
+
+    - name: Run integration tests
+      run: cargo test --test integration_test --verbose
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        profile: [dev, release]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Install protoc (macOS)
+      if: matrix.os == 'macos-latest'
+      run: brew install protobuf
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: ${{ matrix.os }}-${{ matrix.profile }}
+
+    - name: Build project
+      run: |
+        if [ "${{ matrix.profile }}" = "release" ]; then
+          cargo build --release
+        else
+          cargo build
+        fi
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build documentation
+      run: cargo doc --all-features --no-deps --document-private-items
+      env:
+        RUSTDOCFLAGS: "-D warnings"

@@ -1,0 +1,148 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run integration tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --release
+
+    - name: Run integration tests (including ignored)
+      run: cargo test --test integration_test --verbose -- --include-ignored
+
+  cluster-tests:
+    name: Cluster Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build project
+      run: cargo build --release
+
+    - name: Make test script executable
+      run: chmod +x test-cluster.sh
+
+    - name: Run cluster integration tests
+      run: |
+        echo "🚀 Starting cluster integration tests..."
+        ./test-cluster.sh
+      timeout-minutes: 8
+
+    - name: Cleanup cluster artifacts
+      if: always()
+      run: |
+        echo "🧹 Cleaning up cluster test artifacts..."
+        pkill -f ferrite-server || true
+        rm -rf test-cluster/ || true
+        rm -f *.log || true
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build release optimized
+      run: cargo build --release
+
+    - name: Run performance-related tests
+      run: |
+        # Run the large dataset storage test specifically
+        cargo test --release test_large_dataset_storage --verbose
+
+    - name: Run cluster performance test
+      run: |
+        echo "🏃‍♂️ Running cluster performance tests..."
+        chmod +x test-cluster.sh
+        # Run with additional performance testing flag if available
+        FERRITE_PERF_TEST=1 ./test-cluster.sh
+
+    - name: Cleanup performance test artifacts
+      if: always()
+      run: |
+        pkill -f ferrite-server || true
+        rm -rf test-cluster/ || true
+        rm -f *.log || true
+
+  memory-tests:
+    name: Memory Safety Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install nightly Rust toolchain
+      uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: miri
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: nightly-miri
+
+    - name: Run Miri for memory safety checks
+      run: |
+        # Miri can't run all tests, focus on core logic without I/O
+        cargo +nightly miri test --lib -- --test-threads=1
+      env:
+        MIRIFLAGS: -Zmiri-disable-isolation

@@ -1,0 +1,134 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security audit daily at 1 AM UTC
+    - cron: '0 1 * * *'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-audit
+      run: cargo install cargo-audit
+
+    - name: Run security audit
+      run: cargo audit
+
+    - name: Run security audit with JSON output
+      run: cargo audit --json > audit-results.json
+      continue-on-error: true
+
+    - name: Upload audit results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-audit-results
+        path: audit-results.json
+
+  deny:
+    name: Dependency Policy Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Install cargo-deny
+      run: cargo install --locked cargo-deny
+
+    - name: Create default deny.toml if not exists
+      run: |
+        if [ ! -f deny.toml ]; then
+          echo "Creating default deny.toml configuration..."
+          cat > deny.toml << 'EOF'
+        [licenses]
+        allow = [
+            "Apache-2.0",
+            "MIT",
+            "BSD-2-Clause",
+            "BSD-3-Clause",
+            "ISC",
+            "Unicode-DFS-2016",
+        ]
+        EOF
+        fi
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Run dependency policy check
+      run: cargo deny check
+
+  unused-deps:
+    name: Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install nightly Rust toolchain
+      uses: dtolnay/rust-toolchain@nightly
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Install cargo-udeps
+      run: cargo install cargo-udeps --locked
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        key: nightly-udeps
+
+    - name: Check for unused dependencies
+      run: cargo +nightly udeps --all-targets
+
+  supply-chain:
+    name: Supply Chain Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Install cargo-geiger
+      run: cargo install cargo-geiger --locked
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Run supply chain analysis
+      run: |
+        echo "🔍 Analyzing unsafe code usage..."
+        cargo geiger --format GitHubMarkdown >> $GITHUB_STEP_SUMMARY || true

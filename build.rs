@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compile(
             &[
                 "proto/kv.proto",
-                "proto/management.proto", 
+                "proto/management.proto",
                 "proto/raft.proto",
             ],
             &["proto"], // Include directory
@@ -19,4 +19,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=proto/raft.proto");
 
     Ok(())
-} 
+}

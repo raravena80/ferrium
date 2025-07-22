@@ -1,10 +1,10 @@
+use serde::{Deserialize, Serialize};
+use serde_with::{DurationMilliSeconds, serde_as};
 use std::collections::HashMap;
 use std::io::Cursor;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DurationMilliSeconds};
 
 /// Node ID type - using u64 as mentioned in the user's requirements
 pub type NodeId = u64;
@@ -33,7 +33,11 @@ pub struct Node {
 
 impl std::fmt::Display for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Node {{ rpc_addr: {}, api_addr: {} }}", self.rpc_addr, self.api_addr)
+        write!(
+            f,
+            "Node {{ rpc_addr: {}, api_addr: {} }}",
+            self.rpc_addr, self.api_addr
+        )
     }
 }
 
@@ -124,7 +128,7 @@ pub struct StorageConfig {
     pub sync_writes: bool,
     /// Block cache size (in MB)
     pub block_cache_size: u32,
-    /// Write buffer size (in MB) 
+    /// Write buffer size (in MB)
     pub write_buffer_size: u32,
 }
 
@@ -204,21 +208,54 @@ pub enum LogFormat {
 }
 
 /// Cluster configuration
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterConfig {
-    /// Known peers for cluster discovery
+    /// Known peers for cluster discovery (HashMap format - optional)
+    #[serde(default)]
     pub peers: HashMap<NodeId, PeerConfig>,
+    /// Known peers for cluster discovery (Array format - preferred)
+    #[serde(default, rename = "peer")]
+    pub peer_list: Vec<PeerConfigWithId>,
     /// Auto-discovery settings
     pub discovery: DiscoveryConfig,
     /// Cluster name (for identification)
     pub name: String,
     /// Expected cluster size (for initialization)
     pub expected_size: Option<u32>,
+    /// Enable automatic joining as learners
+    pub enable_auto_join: bool,
+    /// Timeout for leader discovery during auto-join
+    #[serde_as(as = "DurationMilliSeconds<u64>")]
+    pub leader_discovery_timeout: Duration,
+    /// Timeout for auto-join process
+    #[serde_as(as = "DurationMilliSeconds<u64>")]
+    pub auto_join_timeout: Duration,
+    /// Retry interval for auto-join attempts
+    #[serde_as(as = "DurationMilliSeconds<u64>")]
+    pub auto_join_retry_interval: Duration,
+    /// Auto-accept learner join requests (for leaders)
+    pub auto_accept_learners: bool,
 }
 
 /// Individual peer configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PeerConfig {
+    /// Peer's HTTP address
+    pub http_addr: SocketAddr,
+    /// Peer's gRPC address
+    pub grpc_addr: SocketAddr,
+    /// Priority for leader election (higher = more likely to be leader)
+    pub priority: Option<u32>,
+    /// Whether this peer should participate in voting
+    pub voting: bool,
+}
+
+/// Individual peer configuration with ID (for array format)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeerConfigWithId {
+    /// Peer's node ID
+    pub id: NodeId,
     /// Peer's HTTP address
     pub http_addr: SocketAddr,
     /// Peer's gRPC address
@@ -330,7 +367,7 @@ impl Default for StorageConfig {
             log_retention_count: 10,
             enable_wal: true,
             sync_writes: false,
-            block_cache_size: 64, // 64MB
+            block_cache_size: 64,  // 64MB
             write_buffer_size: 64, // 64MB
         }
     }
@@ -379,10 +416,38 @@ impl Default for ClusterConfig {
     fn default() -> Self {
         Self {
             peers: HashMap::new(),
+            peer_list: Vec::new(),
             discovery: DiscoveryConfig::default(),
             name: "ferrite-cluster".to_string(),
             expected_size: None,
+            enable_auto_join: true,
+            leader_discovery_timeout: Duration::from_secs(30),
+            auto_join_timeout: Duration::from_secs(60),
+            auto_join_retry_interval: Duration::from_secs(5),
+            auto_accept_learners: true,
         }
+    }
+}
+
+impl ClusterConfig {
+    /// Get all peers as a HashMap, combining both formats
+    pub fn get_all_peers(&self) -> HashMap<NodeId, PeerConfig> {
+        let mut all_peers = self.peers.clone();
+
+        // Add peers from array format
+        for peer_with_id in &self.peer_list {
+            all_peers.insert(
+                peer_with_id.id,
+                PeerConfig {
+                    http_addr: peer_with_id.http_addr,
+                    grpc_addr: peer_with_id.grpc_addr,
+                    priority: peer_with_id.priority,
+                    voting: peer_with_id.voting,
+                },
+            );
+        }
+
+        all_peers
     }
 }
 
@@ -413,60 +478,58 @@ impl Default for SecurityConfig {
 impl FerriteConfig {
     /// Load configuration from file
     pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| ConfigError::Io(e))?;
-        
-        let config: Self = toml::from_str(&content)
-            .map_err(|e| ConfigError::Parse(e.to_string()))?;
-        
+        let content = std::fs::read_to_string(path).map_err(|e| ConfigError::Io(e))?;
+
+        let config: Self =
+            toml::from_str(&content).map_err(|e| ConfigError::Parse(e.to_string()))?;
+
         config.validate()?;
         Ok(config)
     }
-    
+
     /// Save configuration to file
     pub fn to_file<P: AsRef<std::path::Path>>(&self, path: P) -> Result<(), ConfigError> {
-        let content = toml::to_string_pretty(self)
-            .map_err(|e| ConfigError::Serialize(e.to_string()))?;
-        
-        std::fs::write(path, content)
-            .map_err(|e| ConfigError::Io(e))?;
-        
+        let content =
+            toml::to_string_pretty(self).map_err(|e| ConfigError::Serialize(e.to_string()))?;
+
+        std::fs::write(path, content).map_err(|e| ConfigError::Io(e))?;
+
         Ok(())
     }
-    
+
     /// Validate configuration values
     pub fn validate(&self) -> Result<(), ConfigError> {
         // Validate node ID
         if self.node.id == 0 {
             return Err(ConfigError::Validation("Node ID cannot be 0".to_string()));
         }
-        
+
         // Validate timeouts
         if self.raft.election_timeout_min >= self.raft.election_timeout_max {
             return Err(ConfigError::Validation(
-                "Election timeout min must be less than max".to_string()
+                "Election timeout min must be less than max".to_string(),
             ));
         }
-        
+
         // Validate addresses are not conflicting
         if self.node.http_addr == self.node.grpc_addr {
             return Err(ConfigError::Validation(
-                "HTTP and gRPC addresses cannot be the same".to_string()
+                "HTTP and gRPC addresses cannot be the same".to_string(),
             ));
         }
-        
+
         // Validate log level
         let valid_levels = ["trace", "debug", "info", "warn", "error"];
         if !valid_levels.contains(&self.logging.level.as_str()) {
-            return Err(ConfigError::Validation(
-                format!("Invalid log level: {}. Must be one of: {:?}", 
-                       self.logging.level, valid_levels)
-            ));
+            return Err(ConfigError::Validation(format!(
+                "Invalid log level: {}. Must be one of: {:?}",
+                self.logging.level, valid_levels
+            )));
         }
-        
+
         Ok(())
     }
-    
+
     /// Get default configuration file paths
     pub fn default_config_paths() -> Vec<PathBuf> {
         let mut paths = vec![
@@ -474,19 +537,19 @@ impl FerriteConfig {
             PathBuf::from("config/ferrite.toml"),
             PathBuf::from("/etc/ferrite/config.toml"),
         ];
-        
+
         if let Some(config_dir) = dirs::config_dir() {
             paths.push(config_dir.join("ferrite").join("config.toml"));
         }
-        
+
         if let Some(home_dir) = dirs::home_dir() {
             paths.push(home_dir.join(".config").join("ferrite").join("config.toml"));
             paths.push(home_dir.join(".ferrite.toml"));
         }
-        
+
         paths
     }
-    
+
     /// Find and load configuration file from default locations
     pub fn load_default() -> Result<Self, ConfigError> {
         for path in Self::default_config_paths() {
@@ -494,7 +557,7 @@ impl FerriteConfig {
                 return Self::from_file(&path);
             }
         }
-        
+
         // No config file found, return default configuration
         Ok(Self::default())
     }
@@ -505,13 +568,13 @@ impl FerriteConfig {
 pub enum ConfigError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Parse error: {0}")]
     Parse(String),
-    
+
     #[error("Serialization error: {0}")]
     Serialize(String),
-    
+
     #[error("Validation error: {0}")]
     Validation(String),
 }
@@ -531,4 +594,4 @@ pub fn create_raft_config(config: &RaftConfig) -> openraft::Config {
 pub fn create_raft_config_default() -> openraft::Config {
     let default_raft_config = RaftConfig::default();
     create_raft_config(&default_raft_config)
-} 
+}

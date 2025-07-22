@@ -2,16 +2,19 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use openraft::{
-    error::{NetworkError, RPCError, RemoteError, RaftError},
-    network::{RPCOption, RaftNetwork, RaftNetworkFactory}, 
-    raft::{AppendEntriesRequest, AppendEntriesResponse, InstallSnapshotRequest, InstallSnapshotResponse, VoteRequest, VoteResponse},
+    error::{NetworkError, RPCError, RaftError, RemoteError},
+    network::{RPCOption, RaftNetwork, RaftNetworkFactory},
+    raft::{
+        AppendEntriesRequest, AppendEntriesResponse, InstallSnapshotRequest,
+        InstallSnapshotResponse, VoteRequest, VoteResponse,
+    },
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use tracing::{debug, error};
 
-use crate::config::{Node, NodeId, TypeConfig, KvRequest, KvResponse};
+use crate::config::{KvRequest, KvResponse, Node, NodeId, TypeConfig};
 
 /// Network configuration for nodes
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,7 +68,13 @@ impl HttpNetwork {
         Req: Serialize + Send,
         Resp: for<'a> Deserialize<'a> + Send,
     {
-        let url = format!("http://{}/{}", self.target_addr, uri);
+        let url = if self.target_addr.starts_with("http://")
+            || self.target_addr.starts_with("https://")
+        {
+            format!("{}/{}", self.target_addr, uri)
+        } else {
+            format!("http://{}/{}", self.target_addr, uri)
+        };
 
         debug!("Sending RPC to {}: {}", self.target_node, url);
 
@@ -79,7 +88,7 @@ impl HttpNetwork {
                 error!("Network error sending to {}: {}", url, e);
                 RPCError::Network(NetworkError::new(&std::io::Error::new(
                     std::io::ErrorKind::ConnectionRefused,
-                    format!("Failed to connect to {}: {}", self.target_addr, e)
+                    format!("Failed to connect to {}: {}", self.target_addr, e),
                 )))
             })?;
 
@@ -87,15 +96,17 @@ impl HttpNetwork {
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
             error!("HTTP error {}: {}", status, body);
-            
+
             // Try to parse as a remote error first
-            if let Ok(remote_error) = serde_json::from_str::<RemoteError<NodeId, Node, RaftError<NodeId>>>(&body) {
+            if let Ok(remote_error) =
+                serde_json::from_str::<RemoteError<NodeId, Node, RaftError<NodeId>>>(&body)
+            {
                 return Err(RPCError::RemoteError(remote_error));
             }
 
             return Err(RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("RPC failed with status {}: {}", status, body)
+                format!("RPC failed with status {}: {}", status, body),
             ))));
         }
 
@@ -103,7 +114,7 @@ impl HttpNetwork {
             error!("Failed to parse response from {}: {}", url, e);
             RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("Failed to parse response: {}", e)
+                format!("Failed to parse response: {}", e),
             )))
         })?;
 
@@ -124,11 +135,27 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
         &mut self,
         req: InstallSnapshotRequest<TypeConfig>,
         _option: RPCOption,
-    ) -> Result<InstallSnapshotResponse<NodeId>, RPCError<NodeId, Node, openraft::error::RaftError<NodeId, openraft::error::InstallSnapshotError>>> {
+    ) -> Result<
+        InstallSnapshotResponse<NodeId>,
+        RPCError<
+            NodeId,
+            Node,
+            openraft::error::RaftError<NodeId, openraft::error::InstallSnapshotError>,
+        >,
+    > {
         // For install_snapshot, we need to use a different send_rpc signature due to different error type
-        let url = format!("http://{}/raft/install-snapshot", self.target_addr);
+        let url = if self.target_addr.starts_with("http://")
+            || self.target_addr.starts_with("https://")
+        {
+            format!("{}/raft/install-snapshot", self.target_addr)
+        } else {
+            format!("http://{}/raft/install-snapshot", self.target_addr)
+        };
 
-        debug!("Sending InstallSnapshot RPC to {}: {}", self.target_node, url);
+        debug!(
+            "Sending InstallSnapshot RPC to {}: {}",
+            self.target_node, url
+        );
 
         let response = self
             .client
@@ -140,7 +167,7 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
                 error!("Network error sending to {}: {}", url, e);
                 RPCError::Network(NetworkError::new(&std::io::Error::new(
                     std::io::ErrorKind::ConnectionRefused,
-                    format!("Failed to connect to {}: {}", self.target_addr, e)
+                    format!("Failed to connect to {}: {}", self.target_addr, e),
                 )))
             })?;
 
@@ -148,10 +175,10 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
             error!("HTTP error {}: {}", status, body);
-            
+
             return Err(RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("RPC failed with status {}: {}", status, body)
+                format!("RPC failed with status {}: {}", status, body),
             ))));
         }
 
@@ -159,7 +186,7 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
             error!("Failed to parse response from {}: {}", url, e);
             RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("Failed to parse response: {}", e)
+                format!("Failed to parse response: {}", e),
             )))
         })?;
 
@@ -197,48 +224,60 @@ impl RaftNetworkFactory<TypeConfig> for HttpNetworkFactory {
 /// Management API for handling administrative requests
 pub mod management {
     use super::*;
-    use openraft::{RaftMetrics, Raft};
+    use crate::config::{FerriteConfig, PeerConfig};
+    use openraft::{Raft, RaftMetrics};
+    use std::time::Duration;
 
     #[derive(Clone)]
     pub struct ManagementApi {
         pub raft: Raft<TypeConfig>,
         pub node_id: NodeId,
+        pub config: FerriteConfig,
     }
 
     impl ManagementApi {
-        pub fn new(raft: Raft<TypeConfig>, node_id: NodeId) -> Self {
-            Self { raft, node_id }
+        pub fn new(raft: Raft<TypeConfig>, node_id: NodeId, config: FerriteConfig) -> Self {
+            Self {
+                raft,
+                node_id,
+                config,
+            }
         }
 
-        pub async fn init(&self) -> Result<(), openraft::error::RaftError<NodeId, openraft::error::InitializeError<NodeId, Node>>> {
+        pub async fn init(
+            &self,
+        ) -> Result<
+            (),
+            openraft::error::RaftError<NodeId, openraft::error::InitializeError<NodeId, Node>>,
+        > {
             use std::collections::BTreeMap;
-            
+
             let mut nodes = BTreeMap::new();
-            // For single-node initialization, use a default address
-            // In practice, this should be configured based on the actual node's address
-            nodes.insert(1, Node {
-                rpc_addr: "127.0.0.1:8001".to_string(),
-                api_addr: "127.0.0.1:8001".to_string(),
-            });
+            // Use the actual node's configured address for initialization
+            nodes.insert(
+                self.node_id,
+                Node {
+                    rpc_addr: format!("http://{}", self.config.node.http_addr),
+                    api_addr: format!("http://{}", self.config.node.http_addr),
+                },
+            );
 
             self.raft.initialize(nodes).await
         }
 
-        pub async fn add_learner(
-            &self,
-            node_id: NodeId,
-            node: Node,
-        ) -> Result<(), anyhow::Error> {
-            self.raft.add_learner(node_id, node, true).await
+        pub async fn add_learner(&self, node_id: NodeId, node: Node) -> Result<(), anyhow::Error> {
+            self.raft
+                .add_learner(node_id, node, true)
+                .await
                 .map_err(|e| anyhow::anyhow!("Add learner failed: {}", e))?;
             Ok(())
         }
 
-        pub async fn change_membership(
-            &self,
-            members: Vec<NodeId>,
-        ) -> Result<(), anyhow::Error> {
-            let _response = self.raft.change_membership(members, false).await
+        pub async fn change_membership(&self, members: Vec<NodeId>) -> Result<(), anyhow::Error> {
+            let _response = self
+                .raft
+                .change_membership(members, false)
+                .await
                 .map_err(|e| anyhow::anyhow!("Change membership failed: {}", e))?;
             Ok(())
         }
@@ -248,16 +287,23 @@ pub mod management {
         }
 
         pub async fn write(&self, req: KvRequest) -> Result<KvResponse, anyhow::Error> {
-            let response = self.raft.client_write(req).await
+            let response = self
+                .raft
+                .client_write(req)
+                .await
                 .map_err(|e| anyhow::anyhow!("Failed to write: {}", e))?;
             Ok(response.data)
         }
 
         pub async fn read(&self, key: &str) -> Result<Option<String>, anyhow::Error> {
-            self.raft.ensure_linearizable().await
+            self.raft
+                .ensure_linearizable()
+                .await
                 .map_err(|e| anyhow::anyhow!("Failed to ensure linearizability: {}", e))?;
-            
-            let req = KvRequest::Get { key: key.to_string() };
+
+            let req = KvRequest::Get {
+                key: key.to_string(),
+            };
             match self.raft.client_write(req).await {
                 Ok(response) => {
                     if let KvResponse::Get { value } = response.data {
@@ -280,13 +326,197 @@ pub mod management {
         pub async fn leader(&self) -> Option<NodeId> {
             self.raft.current_leader().await
         }
+
+        /// Discover the current leader from known peers
+        pub async fn discover_leader(
+            &self,
+            peers: &std::collections::HashMap<NodeId, PeerConfig>,
+            timeout: Duration,
+        ) -> Result<Option<(NodeId, String)>, anyhow::Error> {
+            use reqwest::Client;
+            use std::time::Instant;
+
+            let client = Client::builder()
+                .timeout(Duration::from_secs(5))
+                .build()
+                .map_err(|e| anyhow::anyhow!("Failed to create HTTP client: {}", e))?;
+
+            let start = Instant::now();
+
+            while start.elapsed() < timeout {
+                for (&peer_id, peer_config) in peers {
+                    // Skip self
+                    if peer_id == self.node_id {
+                        continue;
+                    }
+
+                    let url = format!("http://{}/leader", peer_config.http_addr);
+
+                    match client.get(&url).send().await {
+                        Ok(response) if response.status().is_success() => {
+                            match response.json::<serde_json::Value>().await {
+                                Ok(json) => {
+                                    if let Some(leader_id) = json["leader"].as_u64() {
+                                        tracing::info!(
+                                            "Discovered leader: Node {} via Node {}",
+                                            leader_id,
+                                            peer_id
+                                        );
+
+                                        // Find the leader's HTTP address
+                                        if let Some(leader_config) = peers.get(&leader_id) {
+                                            return Ok(Some((
+                                                leader_id,
+                                                format!("http://{}", leader_config.http_addr),
+                                            )));
+                                        } else if leader_id == self.node_id {
+                                            // We are the leader
+                                            return Ok(None);
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    tracing::debug!(
+                                        "Failed to parse leader response from {}: {}",
+                                        url,
+                                        e
+                                    );
+                                }
+                            }
+                        }
+                        Ok(response) => {
+                            tracing::debug!(
+                                "Non-success response from {}: {}",
+                                url,
+                                response.status()
+                            );
+                        }
+                        Err(e) => {
+                            tracing::debug!("Failed to contact peer {}: {}", url, e);
+                        }
+                    }
+                }
+
+                // Brief pause before retrying
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
+
+            Err(anyhow::anyhow!("Failed to discover leader within timeout"))
+        }
+
+        /// Attempt to join an existing cluster as a learner
+        pub async fn auto_join_cluster(
+            &self,
+            config: &FerriteConfig,
+        ) -> Result<bool, anyhow::Error> {
+            if !config.cluster.enable_auto_join {
+                tracing::info!("Auto-join is disabled");
+                return Ok(false);
+            }
+
+            let all_peers = config.cluster.get_all_peers();
+            if all_peers.is_empty() {
+                tracing::info!("No peers configured, skipping auto-join");
+                return Ok(false);
+            }
+
+            tracing::info!("Starting auto-join process...");
+
+            // Wait a bit for other nodes to potentially elect a leader
+            tokio::time::sleep(Duration::from_secs(2)).await;
+
+            // Try to discover the leader
+            match self
+                .discover_leader(&all_peers, config.cluster.leader_discovery_timeout)
+                .await
+            {
+                Ok(Some((leader_id, leader_url))) => {
+                    tracing::info!("Found leader: Node {} at {}", leader_id, leader_url);
+
+                    // Request to join as learner
+                    let join_result = self.request_join_as_learner(&leader_url, &config).await;
+
+                    match join_result {
+                        Ok(()) => {
+                            tracing::info!("Successfully joined cluster as learner");
+                            Ok(true)
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to join as learner: {}", e);
+                            Ok(false)
+                        }
+                    }
+                }
+                Ok(None) => {
+                    tracing::info!("We appear to be the leader, no need to join");
+                    Ok(false)
+                }
+                Err(e) => {
+                    tracing::info!("No leader found during discovery: {}", e);
+                    Ok(false)
+                }
+            }
+        }
+
+        /// Request to join as a learner to the specified leader
+        async fn request_join_as_learner(
+            &self,
+            leader_url: &str,
+            config: &FerriteConfig,
+        ) -> Result<(), anyhow::Error> {
+            use reqwest::Client;
+            use serde_json::json;
+
+            let client = Client::builder()
+                .timeout(Duration::from_secs(10))
+                .build()
+                .map_err(|e| anyhow::anyhow!("Failed to create HTTP client: {}", e))?;
+
+            let request_body = json!({
+                "node_id": self.node_id,
+                "rpc_addr": format!("http://{}", config.node.http_addr),
+                "api_addr": format!("http://{}", config.node.http_addr)
+            });
+
+            let url = format!("{}/add-learner", leader_url);
+
+            let start = std::time::Instant::now();
+            while start.elapsed() < config.cluster.auto_join_timeout {
+                match client.post(&url).json(&request_body).send().await {
+                    Ok(response) if response.status().is_success() => {
+                        tracing::info!("Join request accepted by leader");
+                        return Ok(());
+                    }
+                    Ok(response) => {
+                        let status = response.status();
+                        let body = response.text().await.unwrap_or_default();
+                        tracing::warn!("Join request rejected: {} - {}", status, body);
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to send join request: {}", e);
+                    }
+                }
+
+                tokio::time::sleep(config.cluster.auto_join_retry_interval).await;
+            }
+
+            Err(anyhow::anyhow!("Auto-join timed out"))
+        }
+
+        /// Check if we should auto-accept this learner request
+        pub fn should_auto_accept_learner(&self, node_id: NodeId, config: &FerriteConfig) -> bool {
+            // Only auto-accept if enabled and the node is in our known peers
+            let all_peers = config.cluster.get_all_peers();
+            config.cluster.auto_accept_learners && all_peers.contains_key(&node_id)
+        }
     }
 }
 
 pub mod api {
     use super::management::ManagementApi;
     use super::*;
-    use actix_web::{web, HttpResponse, Result};
+    use crate::config::FerriteConfig;
+    use actix_web::{HttpResponse, Result, web};
     use openraft::Raft;
     use serde_json::json;
 
@@ -331,16 +561,34 @@ pub mod api {
     pub async fn add_learner(
         req: web::Json<serde_json::Value>,
         mgmt: web::Data<ManagementApi>,
+        config: web::Data<FerriteConfig>,
     ) -> Result<HttpResponse> {
         let node_id = req["node_id"].as_u64().unwrap() as NodeId;
         let rpc_addr = req["rpc_addr"].as_str().unwrap().to_string();
         let api_addr = req["api_addr"].as_str().unwrap().to_string();
-        
+
+        // Check if this is an auto-join request and if we should accept it
+        let should_accept = mgmt.should_auto_accept_learner(node_id, &config);
+
+        if !should_accept {
+            // For now, we'll accept all requests, but log when auto-accept would reject
+            tracing::warn!(
+                "Learner join request from Node {} would be rejected by auto-accept policy",
+                node_id
+            );
+        }
+
         let node = Node { rpc_addr, api_addr };
-        
+
         match mgmt.add_learner(node_id, node).await {
-            Ok(_) => Ok(HttpResponse::Ok().json(json!({"status": "learner added"}))),
-            Err(e) => Ok(HttpResponse::InternalServerError().json(json!({"error": e.to_string()}))),
+            Ok(_) => {
+                tracing::info!("Added Node {} as learner", node_id);
+                Ok(HttpResponse::Ok().json(json!({"status": "learner added"})))
+            }
+            Err(e) => {
+                tracing::warn!("Failed to add Node {} as learner: {}", node_id, e);
+                Ok(HttpResponse::InternalServerError().json(json!({"error": e.to_string()})))
+            }
         }
     }
 
@@ -397,4 +645,4 @@ pub mod api {
         let leader = mgmt.leader().await;
         Ok(HttpResponse::Ok().json(json!({"leader": leader})))
     }
-} 
+}

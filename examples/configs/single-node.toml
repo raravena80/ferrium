@@ -1,0 +1,114 @@
+# Ferrite Single Node Configuration
+# This configuration sets up a single-node Ferrite cluster for development or testing
+
+[node]
+# Unique identifier for this node (must be non-zero)
+id = 1
+# HTTP API bind address
+http_addr = "127.0.0.1:8001"
+# gRPC API bind address
+grpc_addr = "127.0.0.1:9001"
+# Data directory for persistent storage
+data_dir = "./data/node1"
+# Optional node name for identification
+name = "ferrite-node-1"
+description = "Primary node for development cluster"
+
+[network]
+# Request timeout in milliseconds
+request_timeout = 30000
+# Connection timeout in milliseconds
+connect_timeout = 10000
+# Keep-alive interval in milliseconds
+keep_alive_interval = 60000
+# Maximum retry attempts for failed requests
+max_retries = 3
+# Base delay for exponential backoff (milliseconds)
+retry_delay = 100
+# Enable compression for network communication
+enable_compression = true
+# Maximum message size (4MB)
+max_message_size = 4194304
+
+[storage]
+# Enable data compression
+enable_compression = true
+# Compaction strategy: "level", "universal", or "fifo"
+compaction_strategy = "level"
+# Maximum log file size (100MB)
+max_log_size = 104857600
+# Number of log files to retain
+log_retention_count = 10
+# Enable write-ahead logging for durability
+enable_wal = true
+# Sync writes to disk (slower but more durable)
+sync_writes = false
+# Block cache size in MB
+block_cache_size = 64
+# Write buffer size in MB
+write_buffer_size = 64
+
+[raft]
+# Heartbeat interval in milliseconds
+heartbeat_interval = 250
+# Minimum election timeout in milliseconds
+election_timeout_min = 299
+# Maximum election timeout in milliseconds
+election_timeout_max = 500
+# Maximum entries per append entries request
+max_append_entries = 100
+# Enable automatic log compaction
+enable_auto_compaction = true
+# Log compaction threshold (number of entries)
+compaction_threshold = 1000
+# Maximum inflight requests
+max_inflight_requests = 10
+
+[raft.snapshot_policy]
+# Enable automatic snapshots
+enable_auto_snapshot = true
+# Entries before creating snapshot
+entries_since_last_snapshot = 1000
+# Snapshot interval in milliseconds (5 minutes)
+snapshot_interval = 300000
+
+[logging]
+# Log level: "trace", "debug", "info", "warn", "error"
+level = "info"
+# Log format: "json", "pretty", "compact"
+format = "pretty"
+# Enable structured logging
+structured = false
+# Log file path (omit for stdout)
+# file_path = "./logs/ferrite.log"
+# Maximum log file size (100MB)
+max_file_size = 104857600
+# Number of log files to keep
+max_files = 5
+# Enable ANSI colors
+enable_colors = true
+
+[cluster]
+# Cluster name for identification
+name = "ferrite-dev"
+# Expected cluster size (optional)
+expected_size = 1
+
+# No peers defined for single-node setup
+[cluster.peers]
+
+[cluster.discovery]
+# Disable discovery for single-node
+enabled = false
+# Discovery method: "static", "dns", "consul", "etcd", "kubernetes"
+method = "static"
+# Discovery interval in milliseconds
+interval = 30000
+
+[security]
+# Disable TLS for development
+enable_tls = false
+# Disable mutual TLS
+enable_mtls = false
+# Authentication method: "none", "token", "certificate", "jwt"
+auth_method = "none" 

@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package ferrite.management;
+
+// Management Service for cluster operations
+service ManagementService {
+  // Initialize a single-node cluster
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+  
+  // Add a learner node to the cluster
+  rpc AddLearner(AddLearnerRequest) returns (AddLearnerResponse);
+  
+  // Change cluster membership
+  rpc ChangeMembership(ChangeMembershipRequest) returns (ChangeMembershipResponse);
+  
+  // Get cluster metrics
+  rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
+  
+  // Health check
+  rpc HealthCheck(HealthRequest) returns (HealthResponse);
+  
+  // Get cluster leader information
+  rpc GetLeader(LeaderRequest) returns (LeaderResponse);
+}
+
+// Initialize cluster
+message InitializeRequest {
+  // Empty for now - single node initialization
+}
+
+message InitializeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Add learner node
+message AddLearnerRequest {
+  uint64 node_id = 1;
+  string rpc_addr = 2;
+  string api_addr = 3;
+}
+
+message AddLearnerResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Change membership
+message ChangeMembershipRequest {
+  repeated uint64 member_ids = 1;
+}
+
+message ChangeMembershipResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Cluster metrics
+message MetricsRequest {
+  // Empty for now
+}
+
+message MetricsResponse {
+  string state = 1;
+  optional uint64 current_leader = 2;
+  uint64 term = 3;
+  uint64 last_log_index = 4;
+  uint64 last_applied_index = 5;
+  MembershipConfig membership = 6;
+  map<uint64, ReplicationStatus> replication = 7;
+  string error = 8;
+}
+
+message MembershipConfig {
+  uint64 log_index = 1;
+  repeated uint64 voters = 2;
+  repeated uint64 learners = 3;
+  map<uint64, NodeInfo> nodes = 4;
+}
+
+message NodeInfo {
+  string rpc_addr = 1;
+  string api_addr = 2;
+}
+
+message ReplicationStatus {
+  uint64 term = 1;
+  uint64 index = 2;
+}
+
+// Health check
+message HealthRequest {
+  // Empty for now
+}
+
+message HealthResponse {
+  string status = 1;
+  string service = 2;
+  string version = 3;
+}
+
+// Leader information
+message LeaderRequest {
+  // Empty for now
+}
+
+message LeaderResponse {
+  optional uint64 leader_id = 1;
+  optional NodeInfo leader_info = 2;
+  string error = 3;
+} 

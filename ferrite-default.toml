@@ -1,0 +1,61 @@
+[node]
+id = 1
+http_addr = "127.0.0.1:8001"
+grpc_addr = "127.0.0.1:9001"
+data_dir = "./data"
+
+[network]
+request_timeout = 30000
+connect_timeout = 10000
+keep_alive_interval = 60000
+max_retries = 3
+retry_delay = 100
+enable_compression = true
+max_message_size = 4194304
+
+[storage]
+enable_compression = true
+compaction_strategy = "level"
+max_log_size = 104857600
+log_retention_count = 10
+enable_wal = true
+sync_writes = false
+block_cache_size = 64
+write_buffer_size = 64
+
+[raft]
+heartbeat_interval = 250
+election_timeout_min = 299
+election_timeout_max = 500
+max_append_entries = 100
+enable_auto_compaction = true
+compaction_threshold = 1000
+max_inflight_requests = 10
+
+[raft.snapshot_policy]
+enable_auto_snapshot = true
+entries_since_last_snapshot = 1000
+snapshot_interval = 300000
+
+[logging]
+level = "info"
+format = "pretty"
+structured = false
+max_file_size = 104857600
+max_files = 5
+enable_colors = true
+
+[cluster]
+name = "ferrite-cluster"
+
+[cluster.peers]
+
+[cluster.discovery]
+enabled = false
+method = "static"
+interval = 30000
+
+[security]
+enable_tls = false
+enable_mtls = false
+auth_method = "none"

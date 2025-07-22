@@ -1,0 +1,82 @@
+# Ferrite Cluster Node 1 Configuration
+# This is the configuration for the first node in a 3-node production cluster
+
+[node]
+id = 1
+http_addr = "10.0.1.10:8001"
+grpc_addr = "10.0.1.10:9001"
+data_dir = "/var/lib/ferrite/node1"
+name = "ferrite-primary"
+description = "Primary node in production cluster"
+
+[network]
+request_timeout = 30000
+connect_timeout = 5000
+keep_alive_interval = 30000
+max_retries = 5
+retry_delay = 100
+enable_compression = true
+max_message_size = 8388608  # 8MB for production
+
+[storage]
+enable_compression = true
+compaction_strategy = "level"
+max_log_size = 536870912  # 512MB
+log_retention_count = 20
+enable_wal = true
+sync_writes = true  # Enable for production durability
+block_cache_size = 256    # 256MB
+write_buffer_size = 128   # 128MB
+
+[raft]
+heartbeat_interval = 150  # Faster heartbeats for production
+election_timeout_min = 200
+election_timeout_max = 400
+max_append_entries = 200
+enable_auto_compaction = true
+compaction_threshold = 5000
+max_inflight_requests = 20
+
+[raft.snapshot_policy]
+enable_auto_snapshot = true
+entries_since_last_snapshot = 2000
+snapshot_interval = 180000  # 3 minutes
+
+[logging]
+level = "info"
+format = "json"  # Structured logging for production
+structured = true
+file_path = "/var/log/ferrite/node1.log"
+max_file_size = 134217728  # 128MB
+max_files = 10
+enable_colors = false  # No colors in log files
+
+[cluster]
+name = "ferrite-production"
+expected_size = 3
+
+# Define the other nodes in the cluster
+[cluster.peers.2]
+http_addr = "10.0.1.11:8001"
+grpc_addr = "10.0.1.11:9001"
+priority = 90
+voting = true
+
+[cluster.peers.3]
+http_addr = "10.0.1.12:8001"
+grpc_addr = "10.0.1.12:9001"
+priority = 90
+voting = true
+
+[cluster.discovery]
+enabled = false
+method = "static"
+interval = 60000
+
+[security]
+enable_tls = true
+cert_file = "/etc/ferrite/tls/server.crt"
+key_file = "/etc/ferrite/tls/server.key"
+ca_file = "/etc/ferrite/tls/ca.crt"
+enable_mtls = true
+auth_method = "certificate" 

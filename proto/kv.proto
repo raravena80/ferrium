@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package ferrite.kv;
+
+// KV Service for key-value operations
+service KvService {
+  // Set a key-value pair
+  rpc Set(SetRequest) returns (SetResponse);
+  
+  // Get a value by key
+  rpc Get(GetRequest) returns (GetResponse);
+  
+  // Delete a key
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  
+  // Batch operations
+  rpc BatchSet(BatchSetRequest) returns (BatchSetResponse);
+  
+  // List keys with optional prefix
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+  
+  // Check if key exists
+  rpc Exists(ExistsRequest) returns (ExistsResponse);
+}
+
+// Request/Response messages for Set operation
+message SetRequest {
+  string key = 1;
+  string value = 2;
+}
+
+message SetResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Request/Response messages for Get operation
+message GetRequest {
+  string key = 1;
+}
+
+message GetResponse {
+  string key = 1;
+  string value = 2;
+  bool found = 3;
+  string error = 4;
+}
+
+// Request/Response messages for Delete operation
+message DeleteRequest {
+  string key = 1;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  bool existed = 2;
+  string error = 3;
+}
+
+// Request/Response messages for Batch operations
+message BatchSetRequest {
+  repeated KeyValue pairs = 1;
+}
+
+message BatchSetResponse {
+  bool success = 1;
+  uint32 count = 2;
+  string error = 3;
+}
+
+message KeyValue {
+  string key = 1;
+  string value = 2;
+}
+
+// Request/Response messages for ListKeys operation
+message ListKeysRequest {
+  string prefix = 1;
+  uint32 limit = 2;
+}
+
+message ListKeysResponse {
+  repeated string keys = 1;
+  bool has_more = 2;
+  string error = 3;
+}
+
+// Request/Response messages for Exists operation
+message ExistsRequest {
+  string key = 1;
+}
+
+message ExistsResponse {
+  bool exists = 1;
+  string error = 2;
+} 

@@ -1,0 +1,75 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo
+.cargo/
+
+# Ferrite-specific
+/data/
+data/
+node-*/
+/logs/
+logs/
+*.log
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# RocksDB
+*.sst
+*.log
+
+# Test artifacts
+/test-data/
+test-output/
+
+# Debugging
+core
+core.*
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.test
+
+# Documentation build
+/book/
+/mdbook/
+
+# Coverage reports
+/target/coverage/
+/target/llvm-cov-target/
+*.profraw
+
+# Benchmarking
+/target/criterion/
+
+# Lock files (if any)
+*.lock
+
+# Binary distributions
+ferrite-server
+ferrite-client
+ferrite
+
+# Cluster configuration
+cluster.json
+nodes.json 

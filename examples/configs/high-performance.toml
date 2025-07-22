@@ -1,0 +1,79 @@
+# Ferrite High Performance Configuration
+# Optimized for high throughput and low latency in production environments
+
+[node]
+id = 1
+http_addr = "0.0.0.0:8001"
+grpc_addr = "0.0.0.0:9001"
+data_dir = "/nvme/ferrite/data"  # Use NVMe SSD for best performance
+name = "ferrite-hpc"
+description = "High-performance Ferrite node"
+
+[network]
+request_timeout = 10000      # Lower timeout for faster failure detection
+connect_timeout = 2000       # Quick connection establishment
+keep_alive_interval = 15000  # Frequent keep-alives
+max_retries = 2              # Fewer retries, fail fast
+retry_delay = 50             # Quick retry
+enable_compression = false   # Disable compression to reduce CPU usage
+max_message_size = 16777216  # 16MB for large batches
+
+[storage]
+enable_compression = false   # Disable compression for CPU efficiency
+compaction_strategy = "universal"  # Better for write-heavy workloads
+max_log_size = 1073741824   # 1GB log files
+log_retention_count = 50    # Keep more logs for durability
+enable_wal = true
+sync_writes = false         # Async writes for performance (trade durability)
+block_cache_size = 1024     # 1GB cache for read performance
+write_buffer_size = 512     # 512MB write buffer
+
+[raft]
+heartbeat_interval = 100    # Very frequent heartbeats
+election_timeout_min = 150
+election_timeout_max = 250
+max_append_entries = 1000   # Large batches for throughput
+enable_auto_compaction = true
+compaction_threshold = 10000  # Higher threshold
+max_inflight_requests = 50    # Many concurrent requests
+
+[raft.snapshot_policy]
+enable_auto_snapshot = true
+entries_since_last_snapshot = 10000  # Larger snapshots
+snapshot_interval = 60000            # 1 minute for frequent snapshots
+
+[logging]
+level = "warn"              # Minimal logging for performance
+format = "compact"          # Minimal format
+structured = false
+file_path = "/var/log/ferrite/hpc.log"
+max_file_size = 268435456   # 256MB
+max_files = 3               # Fewer log files
+enable_colors = false
+
+[cluster]
+name = "ferrite-hpc"
+expected_size = 3
+
+# Example peer configuration (update with actual IPs)
+[cluster.peers.2]
+http_addr = "10.0.1.21:8001"
+grpc_addr = "10.0.1.21:9001"
+priority = 95
+voting = true
+
+[cluster.peers.3]
+http_addr = "10.0.1.22:8001"
+grpc_addr = "10.0.1.22:9001"
+priority = 95
+voting = true
+
+[cluster.discovery]
+enabled = false
+method = "static"
+interval = 30000
+
+[security]
+enable_tls = false          # Disable TLS for maximum performance
+enable_mtls = false         # (Enable in production with proper hardware)
+auth_method = "none" 

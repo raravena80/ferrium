@@ -3,7 +3,7 @@ name = "ferrite"
 version = "0.1.0"
 edition = "2021"
 description = "A distributed KV storage system built with openraft"
-license = "MIT OR Apache-2.0"
+license = "Apache-2.0"
 
 [[bin]]
 name = "ferrite-server"

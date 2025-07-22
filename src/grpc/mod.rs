@@ -21,11 +21,13 @@ pub use kv::{
 };
 
 pub use management::{
-    management_service_server::{ManagementService as ManagementServiceTrait, ManagementServiceServer},
+    management_service_server::{
+        ManagementService as ManagementServiceTrait, ManagementServiceServer,
+    },
     *,
 };
 
 pub use raft::{
     raft_service_server::{RaftService as RaftServiceTrait, RaftServiceServer},
     *,
-}; 
+};

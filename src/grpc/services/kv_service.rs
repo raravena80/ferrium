@@ -4,9 +4,9 @@ use tonic::{Request, Response, Status};
 
 use crate::config::KvRequest as InternalKvRequest;
 use crate::grpc::{
-    KvServiceTrait, SetRequest, SetResponse, GetRequest, GetResponse, 
-    DeleteRequest, DeleteResponse, BatchSetRequest, BatchSetResponse,
-    ListKeysRequest, ListKeysResponse, ExistsRequest, ExistsResponse,
+    BatchSetRequest, BatchSetResponse, DeleteRequest, DeleteResponse, ExistsRequest,
+    ExistsResponse, GetRequest, GetResponse, KvServiceTrait, ListKeysRequest, ListKeysResponse,
+    SetRequest, SetResponse,
 };
 use crate::network::management::ManagementApi;
 
@@ -22,12 +22,9 @@ impl KvServiceImpl {
 
 #[tonic::async_trait]
 impl KvServiceTrait for KvServiceImpl {
-    async fn set(
-        &self,
-        request: Request<SetRequest>,
-    ) -> Result<Response<SetResponse>, Status> {
+    async fn set(&self, request: Request<SetRequest>) -> Result<Response<SetResponse>, Status> {
         let req = request.into_inner();
-        
+
         let kv_request = InternalKvRequest::Set {
             key: req.key,
             value: req.value,
@@ -45,10 +42,7 @@ impl KvServiceTrait for KvServiceImpl {
         }
     }
 
-    async fn get(
-        &self,
-        request: Request<GetRequest>,
-    ) -> Result<Response<GetResponse>, Status> {
+    async fn get(&self, request: Request<GetRequest>) -> Result<Response<GetResponse>, Status> {
         let req = request.into_inner();
 
         match self.management.read(&req.key).await {
@@ -78,7 +72,7 @@ impl KvServiceTrait for KvServiceImpl {
         request: Request<DeleteRequest>,
     ) -> Result<Response<DeleteResponse>, Status> {
         let req = request.into_inner();
-        
+
         // First check if key exists
         let existed = match self.management.read(&req.key).await {
             Ok(Some(_)) => true,
@@ -86,9 +80,7 @@ impl KvServiceTrait for KvServiceImpl {
             Err(_) => false, // Assume it doesn't exist if we can't read
         };
 
-        let kv_request = InternalKvRequest::Delete {
-            key: req.key,
-        };
+        let kv_request = InternalKvRequest::Delete { key: req.key };
 
         match self.management.write(kv_request).await {
             Ok(_) => Ok(Response::new(DeleteResponse {
@@ -119,11 +111,13 @@ impl KvServiceTrait for KvServiceImpl {
 
             match self.management.write(kv_request).await {
                 Ok(_) => count += 1,
-                Err(e) => return Ok(Response::new(BatchSetResponse {
-                    success: false,
-                    count,
-                    error: e.to_string(),
-                })),
+                Err(e) => {
+                    return Ok(Response::new(BatchSetResponse {
+                        success: false,
+                        count,
+                        error: e.to_string(),
+                    }));
+                }
             }
         }
 
@@ -164,4 +158,4 @@ impl KvServiceTrait for KvServiceImpl {
             })),
         }
     }
-} 
+}

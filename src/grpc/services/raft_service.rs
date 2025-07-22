@@ -1,21 +1,23 @@
 use std::sync::Arc;
 
-use tonic::{Request, Response, Status};
 use openraft::Raft;
+use tonic::{Request, Response, Status};
 
-use crate::config::{TypeConfig, NodeId};
+use crate::config::{NodeId, TypeConfig};
 use crate::grpc::{
-    RaftServiceTrait, 
-    AppendEntriesRequest as GrpcAppendEntriesRequest, 
+    AppendEntriesConflict,
+    AppendEntriesHigherVote,
+    AppendEntriesPartialSuccess,
+    AppendEntriesRequest as GrpcAppendEntriesRequest,
     AppendEntriesResponse as GrpcAppendEntriesResponse,
-    VoteRequest as GrpcVoteRequest,
-    VoteResponse as GrpcVoteResponse,
+    AppendEntriesSuccess,
     InstallSnapshotRequest as GrpcInstallSnapshotRequest,
     InstallSnapshotResponse as GrpcInstallSnapshotResponse,
+    RaftServiceTrait,
+    VoteRequest as GrpcVoteRequest,
+    VoteResponse as GrpcVoteResponse,
     // Import the oneof variants
     append_entries_response::Result as AppendEntriesResult,
-    AppendEntriesSuccess, AppendEntriesPartialSuccess, 
-    AppendEntriesConflict, AppendEntriesHigherVote,
 };
 
 pub struct RaftServiceImpl {
@@ -35,7 +37,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         request: Request<GrpcAppendEntriesRequest>,
     ) -> Result<Response<GrpcAppendEntriesResponse>, Status> {
         let grpc_req = request.into_inner();
-        
+
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_append_entries(grpc_req) {
             Ok(req) => req,
@@ -47,7 +49,7 @@ impl RaftServiceTrait for RaftServiceImpl {
             Ok(openraft_resp) => {
                 let grpc_resp = convert_openraft_to_grpc_append_entries_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
-            },
+            }
             Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
         }
     }
@@ -57,7 +59,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         request: Request<GrpcVoteRequest>,
     ) -> Result<Response<GrpcVoteResponse>, Status> {
         let grpc_req = request.into_inner();
-        
+
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_vote(grpc_req) {
             Ok(req) => req,
@@ -69,7 +71,7 @@ impl RaftServiceTrait for RaftServiceImpl {
             Ok(openraft_resp) => {
                 let grpc_resp = convert_openraft_to_grpc_vote_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
-            },
+            }
             Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
         }
     }
@@ -79,7 +81,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         request: Request<GrpcInstallSnapshotRequest>,
     ) -> Result<Response<GrpcInstallSnapshotResponse>, Status> {
         let grpc_req = request.into_inner();
-        
+
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_install_snapshot(grpc_req) {
             Ok(req) => req,
@@ -91,7 +93,7 @@ impl RaftServiceTrait for RaftServiceImpl {
             Ok(openraft_resp) => {
                 let grpc_resp = convert_openraft_to_grpc_install_snapshot_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
-            },
+            }
             Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
         }
     }
@@ -105,7 +107,7 @@ fn convert_grpc_to_openraft_append_entries(
 ) -> Result<openraft::raft::AppendEntriesRequest<TypeConfig>, String> {
     // This is a complex conversion that would need to handle:
     // - Vote conversion
-    // - LogId conversion  
+    // - LogId conversion
     // - Entry conversion
     // For now, return a placeholder error
     Err("AppendEntries conversion not yet implemented".to_string())
@@ -148,7 +150,5 @@ fn convert_openraft_to_grpc_install_snapshot_response(
     _openraft_resp: openraft::raft::InstallSnapshotResponse<NodeId>,
 ) -> GrpcInstallSnapshotResponse {
     // Placeholder implementation
-    GrpcInstallSnapshotResponse {
-        vote: None,
-    }
-} 
+    GrpcInstallSnapshotResponse { vote: None }
+}

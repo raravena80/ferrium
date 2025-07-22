@@ -4,4 +4,4 @@ pub mod raft_service;
 
 pub use kv_service::KvServiceImpl;
 pub use management_service::ManagementServiceImpl;
-pub use raft_service::RaftServiceImpl; 
+pub use raft_service::RaftServiceImpl;

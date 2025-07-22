@@ -6,13 +6,16 @@ use std::path::Path;
 use std::sync::Arc;
 
 use openraft::{
-    storage::{Adaptor, LogState, RaftLogReader, RaftSnapshotBuilder, RaftStorage, Snapshot},
-    Entry, EntryPayload, LogId, OptionalSend, 
-    SnapshotMeta, StorageError, StorageIOError, 
-    StoredMembership, Vote
+    CommittedLeaderId, Entry, EntryPayload, LeaderId, LogId, OptionalSend, SnapshotMeta,
+    StorageError, StorageIOError, StoredMembership, Vote,
+    storage::{
+        Adaptor, LogState, RaftLogReader, RaftLogStorage, RaftSnapshotBuilder, RaftStorage,
+        Snapshot,
+    },
 };
-use rocksdb::{ColumnFamily, DB, Options, ColumnFamilyDescriptor, Direction};
+use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, DB, Direction, Options};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use tracing::info;
 
 use crate::config::{KvRequest, KvResponse, KvSnapshot, Node, NodeId, TypeConfig};
@@ -77,21 +80,25 @@ impl FerriiteStorage {
     fn logs(&self) -> &ColumnFamily {
         self.db.cf_handle(CF_LOG).unwrap()
     }
-    
+
     fn state(&self) -> &ColumnFamily {
         self.db.cf_handle(CF_STATE).unwrap()
     }
 
-    async fn load_snapshot_data(&mut self, snapshot_data: &Cursor<Vec<u8>>) -> Result<(), StorageError<NodeId>> {
+    async fn load_snapshot_data(
+        &mut self,
+        snapshot_data: &Cursor<Vec<u8>>,
+    ) -> Result<(), StorageError<NodeId>> {
         let kv_snapshot: KvSnapshot = serde_json::from_slice(snapshot_data.get_ref())
             .map_err(|e| StorageIOError::<NodeId>::read(&e))?;
-        
+
         self.state_machine.data = kv_snapshot.data.into_iter().collect();
         Ok(())
     }
 
     fn get_last_purged_(&self) -> Result<Option<LogId<NodeId>>, StorageError<NodeId>> {
-        Ok(self.db
+        Ok(self
+            .db
             .get_cf(self.state(), b"last_purged_log_id")
             .map_err(|e| StorageIOError::<NodeId>::read(&e))?
             .and_then(|v| serde_json::from_slice(&v).ok()))
@@ -99,7 +106,11 @@ impl FerriiteStorage {
 
     fn set_last_purged_(&self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
         self.db
-            .put_cf(self.state(), b"last_purged_log_id", serde_json::to_vec(&log_id).unwrap())
+            .put_cf(
+                self.state(),
+                b"last_purged_log_id",
+                serde_json::to_vec(&log_id).unwrap(),
+            )
             .map_err(|e| StorageError::from(StorageIOError::<NodeId>::write(&e)))
     }
 }
@@ -123,21 +134,22 @@ impl RaftLogReader<TypeConfig> for FerriiteStorage {
             std::ops::Bound::Excluded(x) => id_to_bin(*x + 1),
             std::ops::Bound::Unbounded => id_to_bin(0),
         };
-        
+
         self.db
-            .iterator_cf(self.logs(), rocksdb::IteratorMode::From(&start, Direction::Forward))
+            .iterator_cf(
+                self.logs(),
+                rocksdb::IteratorMode::From(&start, Direction::Forward),
+            )
             .map(|res| {
                 let (id, val) = res.map_err(|e| StorageIOError::<NodeId>::read(&e))?;
-                let entry: Entry<TypeConfig> = serde_json::from_slice(&val)
-                    .map_err(|e| StorageIOError::<NodeId>::read(&e))?;
+                let entry: Entry<TypeConfig> =
+                    serde_json::from_slice(&val).map_err(|e| StorageIOError::<NodeId>::read(&e))?;
                 let id = bin_to_id(&id);
-                
+
                 assert_eq!(id, entry.log_id.index);
                 Ok((id, entry))
             })
-            .take_while(|res| {
-                res.as_ref().map_or(true, |(id, _)| range.contains(id))
-            })
+            .take_while(|res| res.as_ref().map_or(true, |(id, _)| range.contains(id)))
             .map(|res| res.map(|(_, entry)| entry))
             .collect()
     }
@@ -153,9 +165,15 @@ impl RaftSnapshotBuilder<TypeConfig> for FerriiteSnapshotBuilder {
         let last_membership = self.storage.state_machine.last_membership.clone();
 
         let snapshot_data = KvSnapshot {
-            data: self.storage.state_machine.data.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+            data: self
+                .storage
+                .state_machine
+                .data
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
         };
-        
+
         let kv_json = serde_json::to_vec(&snapshot_data)
             .map_err(|e| StorageIOError::<NodeId>::read_state_machine(&e))?;
 
@@ -172,8 +190,13 @@ impl RaftSnapshotBuilder<TypeConfig> for FerriiteSnapshotBuilder {
         };
 
         // Store the snapshot
-        self.storage.db
-            .put_cf(self.storage.state(), b"snapshot", serde_json::to_vec(&(meta.clone(), kv_json.clone())).unwrap())
+        self.storage
+            .db
+            .put_cf(
+                self.storage.state(),
+                b"snapshot",
+                serde_json::to_vec(&(meta.clone(), kv_json.clone())).unwrap(),
+            )
             .map_err(|e| StorageIOError::<NodeId>::write(&e))?;
 
         Ok(Snapshot {
@@ -194,28 +217,34 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
     }
 
     async fn read_vote(&mut self) -> Result<Option<Vote<NodeId>>, StorageError<NodeId>> {
-        Ok(self.db
+        Ok(self
+            .db
             .get_cf(self.state(), b"vote")
             .map_err(|e| StorageIOError::<NodeId>::read_vote(&e))?
             .and_then(|v| serde_json::from_slice(&v).ok()))
     }
 
     async fn get_log_state(&mut self) -> Result<LogState<TypeConfig>, StorageError<NodeId>> {
-        let last = self.db
+        let last = self
+            .db
             .iterator_cf(self.logs(), rocksdb::IteratorMode::End)
             .next()
             .and_then(|res| {
                 let (_, ent) = res.ok()?;
-                Some(serde_json::from_slice::<Entry<TypeConfig>>(&ent).ok()?.log_id)
+                Some(
+                    serde_json::from_slice::<Entry<TypeConfig>>(&ent)
+                        .ok()?
+                        .log_id,
+                )
             });
 
         let last_purged_log_id = self.get_last_purged_()?;
-        
+
         let last_log_id = match last {
             None => last_purged_log_id,
             Some(x) => Some(x),
         };
-        
+
         Ok(LogState {
             last_purged_log_id,
             last_log_id,
@@ -240,11 +269,14 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
                 )
                 .map_err(|e| StorageIOError::<NodeId>::write(&e))?;
         }
-        
+
         Ok(())
     }
 
-    async fn delete_conflict_logs_since(&mut self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
+    async fn delete_conflict_logs_since(
+        &mut self,
+        log_id: LogId<NodeId>,
+    ) -> Result<(), StorageError<NodeId>> {
         tracing::debug!("delete_conflict_logs_since: [{:?}, +oo)", log_id);
 
         let from = id_to_bin(log_id.index);
@@ -265,11 +297,19 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
             .map_err(|e| StorageIOError::<NodeId>::write(&e).into())
     }
 
-    async fn last_applied_state(&mut self) -> Result<(Option<LogId<NodeId>>, StoredMembership<NodeId, Node>), StorageError<NodeId>> {
-        Ok((self.state_machine.last_applied_log_id, self.state_machine.last_membership.clone()))
+    async fn last_applied_state(
+        &mut self,
+    ) -> Result<(Option<LogId<NodeId>>, StoredMembership<NodeId, Node>), StorageError<NodeId>> {
+        Ok((
+            self.state_machine.last_applied_log_id,
+            self.state_machine.last_membership.clone(),
+        ))
     }
 
-    async fn apply_to_state_machine(&mut self, entries: &[Entry<TypeConfig>]) -> Result<Vec<KvResponse>, StorageError<NodeId>> {
+    async fn apply_to_state_machine(
+        &mut self,
+        entries: &[Entry<TypeConfig>],
+    ) -> Result<Vec<KvResponse>, StorageError<NodeId>> {
         let mut responses = Vec::with_capacity(entries.len());
 
         for entry in entries {
@@ -294,7 +334,8 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
                     }
                 },
                 EntryPayload::Membership(mem) => {
-                    self.state_machine.last_membership = StoredMembership::new(Some(entry.log_id), mem.clone());
+                    self.state_machine.last_membership =
+                        StoredMembership::new(Some(entry.log_id), mem.clone());
                     responses.push(KvResponse::Set);
                 }
             }
@@ -308,7 +349,9 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
         }
     }
 
-    async fn begin_receiving_snapshot(&mut self) -> Result<Box<Cursor<Vec<u8>>>, StorageError<NodeId>> {
+    async fn begin_receiving_snapshot(
+        &mut self,
+    ) -> Result<Box<Cursor<Vec<u8>>>, StorageError<NodeId>> {
         Ok(Box::new(Cursor::new(Vec::new())))
     }
 
@@ -331,17 +374,28 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
 
         // Save the snapshot
         self.db
-            .put_cf(self.state(), b"snapshot", serde_json::to_vec(&(meta.clone(), snapshot.into_inner())).unwrap())
-            .map_err(|e| StorageError::from(StorageIOError::<NodeId>::write(&e)))?;
+            .put_cf(
+                self.state(),
+                b"snapshot",
+                serde_json::to_vec(&(meta.clone(), snapshot.into_inner())).unwrap(),
+            )
+            .map_err(|e| StorageIOError::<NodeId>::write(&e))?;
 
         Ok(())
     }
 
-    async fn get_current_snapshot(&mut self) -> Result<Option<Snapshot<TypeConfig>>, StorageError<NodeId>> {
-        match self.db.get_cf(self.state(), b"snapshot").map_err(|e| StorageIOError::<NodeId>::read(&e))? {
+    async fn get_current_snapshot(
+        &mut self,
+    ) -> Result<Option<Snapshot<TypeConfig>>, StorageError<NodeId>> {
+        match self
+            .db
+            .get_cf(self.state(), b"snapshot")
+            .map_err(|e| StorageIOError::<NodeId>::read(&e))?
+        {
             Some(data) => {
-                let (meta, snapshot_data): (SnapshotMeta<NodeId, Node>, Vec<u8>) = 
-                    serde_json::from_slice(&data).map_err(|e| StorageIOError::<NodeId>::read(&e))?;
+                let (meta, snapshot_data): (SnapshotMeta<NodeId, Node>, Vec<u8>) =
+                    serde_json::from_slice(&data)
+                        .map_err(|e| StorageIOError::<NodeId>::read(&e))?;
                 Ok(Some(Snapshot {
                     meta,
                     snapshot: Box::new(Cursor::new(snapshot_data)),
@@ -353,11 +407,23 @@ impl RaftStorage<TypeConfig> for FerriiteStorage {
 }
 
 /// Create new storage instances using the Adaptor pattern
-pub async fn new_storage<P: AsRef<Path>>(db_path: P) -> Result<(Adaptor<TypeConfig, FerriiteStorage>, Adaptor<TypeConfig, FerriiteStorage>), StorageError<NodeId>> {
+pub async fn new_storage<P: AsRef<Path>>(
+    db_path: P,
+) -> Result<
+    (
+        Adaptor<TypeConfig, FerriiteStorage>,
+        Adaptor<TypeConfig, FerriiteStorage>,
+    ),
+    StorageError<NodeId>,
+> {
     let storage = FerriiteStorage::new(db_path).await?;
     Ok(Adaptor::new(storage))
 }
 
 // Re-export the Adaptor types for convenience
 pub type LogStore = Adaptor<TypeConfig, FerriiteStorage>;
-pub type StateMachineStore = Adaptor<TypeConfig, FerriiteStorage>; 
+pub type StateMachineStore = Adaptor<TypeConfig, FerriiteStorage>;
+
+// Storage tests are in test.rs
+#[cfg(test)]
+mod test;

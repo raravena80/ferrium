@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use openraft::{
@@ -11,7 +10,6 @@ use openraft::{
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 use tracing::{debug, error};
 
 use crate::config::{KvRequest, KvResponse, Node, NodeId, TypeConfig};
@@ -646,3 +644,7 @@ pub mod api {
         Ok(HttpResponse::Ok().json(json!({"leader": leader})))
     }
 }
+
+// Network tests are in test.rs
+#[cfg(test)]
+mod test;

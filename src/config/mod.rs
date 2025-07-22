@@ -133,7 +133,7 @@ pub struct StorageConfig {
 }
 
 /// Compaction strategy for RocksDB
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum CompactionStrategy {
     Level,
@@ -308,7 +308,7 @@ pub struct SecurityConfig {
 }
 
 /// Authentication methods
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum AuthMethod {
     None,
@@ -595,3 +595,7 @@ pub fn create_raft_config_default() -> openraft::Config {
     let default_raft_config = RaftConfig::default();
     create_raft_config(&default_raft_config)
 }
+
+// Configuration tests are in test.rs
+#[cfg(test)]
+mod test;

@@ -4,10 +4,10 @@ use tonic::{Request, Response, Status};
 
 use crate::config::Node;
 use crate::grpc::{
-    ManagementServiceTrait, InitializeRequest, InitializeResponse, 
     AddLearnerRequest, AddLearnerResponse, ChangeMembershipRequest, ChangeMembershipResponse,
-    MetricsRequest, MetricsResponse, HealthRequest, HealthResponse,
-    LeaderRequest, LeaderResponse, MembershipConfig, NodeInfo, ReplicationStatus,
+    HealthRequest, HealthResponse, InitializeRequest, InitializeResponse, LeaderRequest,
+    LeaderResponse, ManagementServiceTrait, MembershipConfig, MetricsRequest, MetricsResponse,
+    NodeInfo, ReplicationStatus,
 };
 use crate::network::management::ManagementApi;
 
@@ -44,7 +44,7 @@ impl ManagementServiceTrait for ManagementServiceImpl {
         request: Request<AddLearnerRequest>,
     ) -> Result<Response<AddLearnerResponse>, Status> {
         let req = request.into_inner();
-        
+
         let node = Node {
             rpc_addr: req.rpc_addr,
             api_addr: req.api_addr,
@@ -85,12 +85,12 @@ impl ManagementServiceTrait for ManagementServiceImpl {
         _request: Request<MetricsRequest>,
     ) -> Result<Response<MetricsResponse>, Status> {
         let metrics = self.management.metrics().await;
-        
+
         // Convert openraft metrics to protobuf format - simplified version
         let membership = MembershipConfig {
-            log_index: 0, // TODO: Fix proper conversion
-            voters: vec![], // TODO: Fix proper conversion
-            learners: vec![], // TODO: Fix proper conversion
+            log_index: 0,                            // TODO: Fix proper conversion
+            voters: vec![],                          // TODO: Fix proper conversion
+            learners: vec![],                        // TODO: Fix proper conversion
             nodes: std::collections::HashMap::new(), // TODO: Fix proper conversion
         };
 
@@ -99,8 +99,8 @@ impl ManagementServiceTrait for ManagementServiceImpl {
         Ok(Response::new(MetricsResponse {
             state: format!("{:?}", metrics.state),
             current_leader: metrics.current_leader,
-            term: 0, // TODO: Fix term access
-            last_log_index: 0, // TODO: Fix index access
+            term: 0,               // TODO: Fix term access
+            last_log_index: 0,     // TODO: Fix index access
             last_applied_index: 0, // TODO: Fix index access
             membership: Some(membership),
             replication,
@@ -124,7 +124,7 @@ impl ManagementServiceTrait for ManagementServiceImpl {
         _request: Request<LeaderRequest>,
     ) -> Result<Response<LeaderResponse>, Status> {
         let metrics = self.management.metrics().await;
-        
+
         if let Some(leader_id) = metrics.current_leader {
             if let Some(leader_node) = metrics.membership_config.membership().get_node(&leader_id) {
                 Ok(Response::new(LeaderResponse {
@@ -150,4 +150,4 @@ impl ManagementServiceTrait for ManagementServiceImpl {
             }))
         }
     }
-} 
+}

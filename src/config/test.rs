@@ -61,12 +61,10 @@ fn test_config_validation_invalid_node_id() {
 
     let result = config.validate();
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("Node ID cannot be 0")
-    );
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("Node ID cannot be 0"));
 }
 
 #[test]
@@ -77,12 +75,10 @@ fn test_config_validation_invalid_timeouts() {
 
     let result = config.validate();
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("Election timeout min must be less than max")
-    );
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("Election timeout min must be less than max"));
 }
 
 #[test]
@@ -92,12 +88,10 @@ fn test_config_validation_same_addresses() {
 
     let result = config.validate();
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("HTTP and gRPC addresses cannot be the same")
-    );
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("HTTP and gRPC addresses cannot be the same"));
 }
 
 #[test]
@@ -107,12 +101,10 @@ fn test_config_validation_invalid_log_level() {
 
     let result = config.validate();
     assert!(result.is_err());
-    assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("Invalid log level")
-    );
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("Invalid log level"));
 }
 
 #[test]

@@ -6,14 +6,14 @@ use std::path::Path;
 use std::sync::Arc;
 
 use openraft::{
-    CommittedLeaderId, Entry, EntryPayload, LeaderId, LogId, OptionalSend, SnapshotMeta,
-    StorageError, StorageIOError, StoredMembership, Vote,
     storage::{
         Adaptor, LogState, RaftLogReader, RaftLogStorage, RaftSnapshotBuilder, RaftStorage,
         Snapshot,
     },
+    CommittedLeaderId, Entry, EntryPayload, LeaderId, LogId, OptionalSend, SnapshotMeta,
+    StorageError, StorageIOError, StoredMembership, Vote,
 };
-use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, DB, Direction, Options};
+use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, Direction, Options, DB};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use tracing::info;

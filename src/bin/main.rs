@@ -2,21 +2,21 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use actix_cors::Cors;
-use actix_web::{App, HttpServer, Result, middleware::Logger, web};
+use actix_web::{middleware::Logger, web, App, HttpServer, Result};
 use clap::Parser;
 use openraft::Raft;
-use tracing_subscriber::{EnvFilter, fmt::format::FmtSpan};
+use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 // gRPC imports
 use ferrite::grpc::{
-    KvServiceServer, ManagementServiceServer, RaftServiceServer,
     services::{KvServiceImpl, ManagementServiceImpl, RaftServiceImpl},
+    KvServiceServer, ManagementServiceServer, RaftServiceServer,
 };
 use tonic::transport::Server;
 
 use ferrite::{
-    config::{ConfigError, FerriteConfig, NodeId, create_raft_config},
-    network::{HttpNetworkFactory, api, management::ManagementApi},
+    config::{create_raft_config, ConfigError, FerriteConfig, NodeId},
+    network::{api, management::ManagementApi, HttpNetworkFactory},
     storage::new_storage,
 };
 

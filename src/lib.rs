@@ -11,7 +11,7 @@ pub mod storage;
 
 pub use config::{KvRequest, KvResponse, KvSnapshot, Node, NodeId, TypeConfig};
 pub use network::{HttpNetwork, HttpNetworkFactory, NetworkConfig};
-pub use storage::{FerriiteStorage, LogStore, StateMachineStore, new_storage};
+pub use storage::{new_storage, FerriiteStorage, LogStore, StateMachineStore};
 
 #[derive(thiserror::Error, Debug)]
 pub enum FerriteError {

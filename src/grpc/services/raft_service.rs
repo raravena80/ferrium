@@ -5,6 +5,8 @@ use tonic::{Request, Response, Status};
 
 use crate::config::{NodeId, TypeConfig};
 use crate::grpc::{
+    // Import the oneof variants
+    append_entries_response::Result as AppendEntriesResult,
     AppendEntriesConflict,
     AppendEntriesHigherVote,
     AppendEntriesPartialSuccess,
@@ -16,8 +18,6 @@ use crate::grpc::{
     RaftServiceTrait,
     VoteRequest as GrpcVoteRequest,
     VoteResponse as GrpcVoteResponse,
-    // Import the oneof variants
-    append_entries_response::Result as AppendEntriesResult,
 };
 
 pub struct RaftServiceImpl {

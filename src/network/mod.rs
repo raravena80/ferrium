@@ -514,7 +514,7 @@ pub mod api {
     use super::management::ManagementApi;
     use super::*;
     use crate::config::FerriteConfig;
-    use actix_web::{HttpResponse, Result, web};
+    use actix_web::{web, HttpResponse, Result};
     use openraft::Raft;
     use serde_json::json;
 

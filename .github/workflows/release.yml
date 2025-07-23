@@ -30,23 +30,23 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact-name: ferrite-linux-x86_64
+            artifact-name: ferrium-linux-x86_64
             cross: false
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            artifact-name: ferrite-linux-aarch64
+            artifact-name: ferrium-linux-aarch64
             cross: true
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact-name: ferrite-macos-x86_64
+            artifact-name: ferrium-macos-x86_64
             cross: false
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact-name: ferrite-macos-aarch64
+            artifact-name: ferrium-macos-aarch64
             cross: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact-name: ferrite-windows-x86_64.exe
+            artifact-name: ferrium-windows-x86_64.exe
             cross: false
     steps:
     - name: Checkout repository
@@ -86,6 +86,8 @@ jobs:
 
     - name: Build release binary
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [ "${{ matrix.cross }}" = "true" ]; then
           cross build --release --target ${{ matrix.target }}
@@ -97,18 +99,18 @@ jobs:
       shell: bash
       run: |
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          mv target/${{ matrix.target }}/release/ferrite-server.exe ${{ matrix.artifact-name }}
+          mv target/${{ matrix.target }}/release/ferrium-server.exe ${{ matrix.artifact-name }}
         else
-          mv target/${{ matrix.target }}/release/ferrite-server ${{ matrix.artifact-name }}
+          mv target/${{ matrix.target }}/release/ferrium-server ${{ matrix.artifact-name }}
         fi
 
     - name: Create Release and Upload Assets
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.get_version.outputs.version }}
-        name: Ferrite ${{ steps.get_version.outputs.version }}
+        name: Ferrium ${{ steps.get_version.outputs.version }}
         body: |
-          ## Ferrite ${{ steps.get_version.outputs.version }}
+          ## Ferrium ${{ steps.get_version.outputs.version }}
 
           ### Installation
 
@@ -119,7 +121,7 @@ jobs:
           ```bash
           # Download the appropriate binary for your platform from the assets below
           # or install from source:
-          cargo install --git https://github.com/raravena80/ferrite --tag ${{ steps.get_version.outputs.version }}
+          cargo install --git https://github.com/raravena80/ferrium --tag ${{ steps.get_version.outputs.version }}
           ```
 
           ### Docker
@@ -137,7 +139,7 @@ jobs:
         draft: true
         prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
 
-  # Disabled: publish-crate job removed since "ferrite" name is taken on crates.io
+  # Disabled: publish-crate job removed since "ferrium" name is taken on crates.io
   # Re-enable this job if you rename the crate or want to publish under a different name
 
   docker-release:
@@ -176,7 +178,7 @@ jobs:
           type=ref,event=tag
           type=raw,value=latest,enable={{is_default_branch}}
         labels: |
-          org.opencontainers.image.title=Ferrite
+          org.opencontainers.image.title=Ferrium
           org.opencontainers.image.description=A distributed KV storage system built with openraft
           org.opencontainers.image.url=https://github.com/${{ github.repository }}
           org.opencontainers.image.source=https://github.com/${{ github.repository }}

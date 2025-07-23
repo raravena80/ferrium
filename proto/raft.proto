@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ferrite.raft;
+package ferrium.raft;
 
 // Raft Service for internal Raft communication
 service RaftService {

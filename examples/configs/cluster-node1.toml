@@ -1,12 +1,12 @@
-# Ferrite Cluster Node 1 Configuration
+# Ferrium Cluster Node 1 Configuration
 # This is the configuration for the first node in a 3-node production cluster
 
 [node]
 id = 1
 http_addr = "10.0.1.10:8001"
 grpc_addr = "10.0.1.10:9001"
-data_dir = "/var/lib/ferrite/node1"
-name = "ferrite-primary"
+data_dir = "/var/lib/ferrium/node1"
+name = "ferrium-primary"
 description = "Primary node in production cluster"
 
 [network]
@@ -46,13 +46,13 @@ snapshot_interval = 180000  # 3 minutes
 level = "info"
 format = "json"  # Structured logging for production
 structured = true
-file_path = "/var/log/ferrite/node1.log"
+file_path = "/var/log/ferrium/node1.log"
 max_file_size = 134217728  # 128MB
 max_files = 10
 enable_colors = false  # No colors in log files
 
 [cluster]
-name = "ferrite-production"
+name = "ferrium-production"
 expected_size = 3
 
 # Define the other nodes in the cluster
@@ -75,8 +75,8 @@ interval = 60000
 
 [security]
 enable_tls = true
-cert_file = "/etc/ferrite/tls/server.crt"
-key_file = "/etc/ferrite/tls/server.key"
-ca_file = "/etc/ferrite/tls/ca.crt"
+cert_file = "/etc/ferrium/tls/server.crt"
+key_file = "/etc/ferrium/tls/server.key"
+ca_file = "/etc/ferrium/tls/ca.crt"
 enable_mtls = true
 auth_method = "certificate" 

@@ -57,10 +57,10 @@ pub struct KvSnapshot {
     pub data: std::collections::HashMap<String, String>,
 }
 
-/// Complete Ferrite configuration structure
+/// Complete Ferrium configuration structure
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct FerriteConfig {
+pub struct FerriumConfig {
     pub node: NodeConfig,
     pub network: NetworkConfig,
     pub storage: StorageConfig,
@@ -404,7 +404,7 @@ impl Default for ClusterConfig {
             peers: HashMap::new(),
             peer_list: Vec::new(),
             discovery: DiscoveryConfig::default(),
-            name: "ferrite-cluster".to_string(),
+            name: "ferrium-cluster".to_string(),
             expected_size: None,
             enable_auto_join: true,
             leader_discovery_timeout: Duration::from_secs(30),
@@ -461,7 +461,7 @@ impl Default for SecurityConfig {
 }
 
 /// Configuration loading and management
-impl FerriteConfig {
+impl FerriumConfig {
     /// Load configuration from file
     pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, ConfigError> {
         let content = std::fs::read_to_string(path).map_err(ConfigError::Io)?;
@@ -519,18 +519,18 @@ impl FerriteConfig {
     /// Get default configuration file paths
     pub fn default_config_paths() -> Vec<PathBuf> {
         let mut paths = vec![
-            PathBuf::from("ferrite.toml"),
-            PathBuf::from("config/ferrite.toml"),
-            PathBuf::from("/etc/ferrite/config.toml"),
+            PathBuf::from("ferrium.toml"),
+            PathBuf::from("config/ferrium.toml"),
+            PathBuf::from("/etc/ferrium/config.toml"),
         ];
 
         if let Some(config_dir) = dirs::config_dir() {
-            paths.push(config_dir.join("ferrite").join("config.toml"));
+            paths.push(config_dir.join("ferrium").join("config.toml"));
         }
 
         if let Some(home_dir) = dirs::home_dir() {
-            paths.push(home_dir.join(".config").join("ferrite").join("config.toml"));
-            paths.push(home_dir.join(".ferrite.toml"));
+            paths.push(home_dir.join(".config").join("ferrium").join("config.toml"));
+            paths.push(home_dir.join(".ferrium.toml"));
         }
 
         paths

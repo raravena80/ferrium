@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ferrite.management;
+package ferrium.management;
 
 // Management Service for cluster operations
 service ManagementService {

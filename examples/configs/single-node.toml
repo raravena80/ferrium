@@ -1,5 +1,5 @@
-# Ferrite Single Node Configuration
-# This configuration sets up a single-node Ferrite cluster for development or testing
+# Ferrium Single Node Configuration
+# This configuration sets up a single-node Ferrium cluster for development or testing
 
 [node]
 # Unique identifier for this node (must be non-zero)
@@ -11,7 +11,7 @@ grpc_addr = "127.0.0.1:9001"
 # Data directory for persistent storage
 data_dir = "./data/node1"
 # Optional node name for identification
-name = "ferrite-node-1"
+name = "ferrium-node-1"
 description = "Primary node for development cluster"
 
 [network]
@@ -80,7 +80,7 @@ format = "pretty"
 # Enable structured logging
 structured = false
 # Log file path (omit for stdout)
-# file_path = "./logs/ferrite.log"
+# file_path = "./logs/ferrium.log"
 # Maximum log file size (100MB)
 max_file_size = 104857600
 # Number of log files to keep
@@ -90,7 +90,7 @@ enable_colors = true
 
 [cluster]
 # Cluster name for identification
-name = "ferrite-dev"
+name = "ferrium-dev"
 # Expected cluster size (optional)
 expected_size = 1
 

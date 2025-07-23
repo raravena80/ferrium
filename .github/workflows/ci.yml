@@ -37,12 +37,18 @@ jobs:
         key: ${{ matrix.rust }}
 
     - name: Run unit tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: cargo test --lib --verbose
 
     - name: Run binary tests
-      run: cargo test --bin ferrite-server --verbose
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --bin ferrium-server --verbose
 
     - name: Run integration tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: cargo test --test integration_test --verbose
 
   fmt:
@@ -100,15 +106,7 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install protoc (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y protobuf-compiler
-
-    - name: Install protoc (macOS)
-      if: matrix.os == 'macos-latest'
-      run: brew install protobuf
+    # protoc is now handled automatically by protoc-prebuilt in build.rs
 
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
@@ -117,6 +115,8 @@ jobs:
 
     - name: Build project
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [ "${{ matrix.profile }}" = "release" ]; then
           cargo build --release

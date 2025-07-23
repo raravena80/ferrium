@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ferrite.kv;
+package ferrium.kv;
 
 // KV Service for key-value operations
 service KvService {

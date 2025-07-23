@@ -234,7 +234,7 @@ impl RaftNetworkFactory<TypeConfig> for HttpNetworkFactory {
 /// Management API for handling administrative requests
 pub mod management {
     use super::*;
-    use crate::config::{FerriteConfig, PeerConfig};
+    use crate::config::{FerriumConfig, PeerConfig};
     use openraft::{Raft, RaftMetrics};
     use std::time::Duration;
 
@@ -242,11 +242,11 @@ pub mod management {
     pub struct ManagementApi {
         pub raft: Raft<TypeConfig>,
         pub node_id: NodeId,
-        pub config: FerriteConfig,
+        pub config: FerriumConfig,
     }
 
     impl ManagementApi {
-        pub fn new(raft: Raft<TypeConfig>, node_id: NodeId, config: FerriteConfig) -> Self {
+        pub fn new(raft: Raft<TypeConfig>, node_id: NodeId, config: FerriumConfig) -> Self {
             Self {
                 raft,
                 node_id,
@@ -417,7 +417,7 @@ pub mod management {
         /// Attempt to join an existing cluster as a learner
         pub async fn auto_join_cluster(
             &self,
-            config: &FerriteConfig,
+            config: &FerriumConfig,
         ) -> Result<bool, anyhow::Error> {
             if !config.cluster.enable_auto_join {
                 tracing::info!("Auto-join is disabled");
@@ -472,7 +472,7 @@ pub mod management {
         async fn request_join_as_learner(
             &self,
             leader_url: &str,
-            config: &FerriteConfig,
+            config: &FerriumConfig,
         ) -> Result<(), anyhow::Error> {
             use reqwest::Client;
             use serde_json::json;
@@ -514,7 +514,7 @@ pub mod management {
         }
 
         /// Check if we should auto-accept this learner request
-        pub fn should_auto_accept_learner(&self, node_id: NodeId, config: &FerriteConfig) -> bool {
+        pub fn should_auto_accept_learner(&self, node_id: NodeId, config: &FerriumConfig) -> bool {
             // Only auto-accept if enabled and the node is in our known peers
             let all_peers = config.cluster.get_all_peers();
             config.cluster.auto_accept_learners && all_peers.contains_key(&node_id)
@@ -525,7 +525,7 @@ pub mod management {
 pub mod api {
     use super::management::ManagementApi;
     use super::*;
-    use crate::config::FerriteConfig;
+    use crate::config::FerriumConfig;
     use actix_web::{web, HttpResponse, Result};
     use openraft::Raft;
     use serde_json::json;
@@ -571,7 +571,7 @@ pub mod api {
     pub async fn add_learner(
         req: web::Json<serde_json::Value>,
         mgmt: web::Data<ManagementApi>,
-        config: web::Data<FerriteConfig>,
+        config: web::Data<FerriumConfig>,
     ) -> Result<HttpResponse> {
         let node_id = req["node_id"].as_u64().unwrap() as NodeId;
         let rpc_addr = req["rpc_addr"].as_str().unwrap().to_string();
@@ -641,7 +641,7 @@ pub mod api {
     pub async fn health() -> Result<HttpResponse> {
         Ok(HttpResponse::Ok().json(json!({
             "status": "healthy",
-            "service": "ferrite",
+            "service": "ferrium",
             "version": env!("CARGO_PKG_VERSION")
         })))
     }

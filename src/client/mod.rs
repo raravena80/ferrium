@@ -4,16 +4,16 @@ use reqwest::Client;
 use serde_json::json;
 use tracing::{debug, error};
 
-use crate::{FerriteError, KvRequest, NodeId};
+use crate::{FerriumError, KvRequest, NodeId};
 
-/// Client for interacting with a Ferrite cluster
-pub struct FerriteClient {
+/// Client for interacting with a Ferrium cluster
+pub struct FerriumClient {
     client: Client,
     nodes: Vec<String>,
     current_leader: Option<String>,
 }
 
-impl FerriteClient {
+impl FerriumClient {
     /// Create a new client with a list of node addresses
     pub fn new(nodes: Vec<String>) -> Self {
         let client = Client::builder()
@@ -46,7 +46,7 @@ impl FerriteClient {
     }
 
     /// Get the current leader or try to find one
-    async fn get_leader(&mut self) -> Result<String, FerriteError> {
+    async fn get_leader(&mut self) -> Result<String, FerriumError> {
         // If we have a cached leader, try it first
         if let Some(ref leader) = self.current_leader {
             if self.is_leader(leader).await.unwrap_or(false) {
@@ -85,11 +85,11 @@ impl FerriteClient {
             }
         }
 
-        Err(FerriteError::Network("No leader found".to_string()))
+        Err(FerriumError::Network("No leader found".to_string()))
     }
 
     /// Check if a node is the current leader
-    async fn is_leader(&self, addr: &str) -> Result<bool, FerriteError> {
+    async fn is_leader(&self, addr: &str) -> Result<bool, FerriumError> {
         match self.get_metrics(addr).await {
             Ok(metrics) => Ok(matches!(
                 metrics.get("state").and_then(|v| v.as_str()),
@@ -100,17 +100,17 @@ impl FerriteClient {
     }
 
     /// Get cluster metrics from a specific node
-    async fn get_metrics(&self, addr: &str) -> Result<serde_json::Value, FerriteError> {
+    async fn get_metrics(&self, addr: &str) -> Result<serde_json::Value, FerriumError> {
         let url = format!("http://{addr}/metrics");
         let response = self
             .client
             .get(&url)
             .send()
             .await
-            .map_err(|e| FerriteError::Network(format!("Failed to connect to {addr}: {e}")))?;
+            .map_err(|e| FerriumError::Network(format!("Failed to connect to {addr}: {e}")))?;
 
         if !response.status().is_success() {
-            return Err(FerriteError::Network(format!(
+            return Err(FerriumError::Network(format!(
                 "Request to {} failed with status: {}",
                 addr,
                 response.status()
@@ -118,7 +118,7 @@ impl FerriteClient {
         }
 
         let metrics: serde_json::Value = response.json().await.map_err(|e| {
-            FerriteError::Network(format!("Failed to parse metrics from {addr}: {e}"))
+            FerriumError::Network(format!("Failed to parse metrics from {addr}: {e}"))
         })?;
 
         Ok(metrics)
@@ -130,7 +130,7 @@ impl FerriteClient {
         addr: &str,
         endpoint: &str,
         payload: serde_json::Value,
-    ) -> Result<serde_json::Value, FerriteError> {
+    ) -> Result<serde_json::Value, FerriumError> {
         let url = format!("http://{addr}/{endpoint}");
         debug!("Sending request to: {}", url);
 
@@ -142,21 +142,21 @@ impl FerriteClient {
             .await
             .map_err(|e| {
                 error!("Network error sending to {}: {}", url, e);
-                FerriteError::Network(format!("Failed to connect to {addr}: {e}"))
+                FerriumError::Network(format!("Failed to connect to {addr}: {e}"))
             })?;
 
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
             error!("Request failed with status {}: {}", status, body);
-            return Err(FerriteError::Network(format!(
+            return Err(FerriumError::Network(format!(
                 "Request failed with status {status}: {body}"
             )));
         }
 
         let result: serde_json::Value = response.json().await.map_err(|e| {
             error!("Failed to parse response from {}: {}", url, e);
-            FerriteError::Network(format!("Failed to parse response: {e}"))
+            FerriumError::Network(format!("Failed to parse response: {e}"))
         })?;
 
         debug!("Request to {} completed successfully", url);
@@ -164,27 +164,27 @@ impl FerriteClient {
     }
 
     /// Set a key-value pair
-    pub async fn set(&mut self, key: String, value: String) -> Result<(), FerriteError> {
+    pub async fn set(&mut self, key: String, value: String) -> Result<(), FerriumError> {
         let leader = self.get_leader().await?;
         let request = KvRequest::Set { key, value };
 
         let result = self.send_request(&leader, "write", json!(request)).await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!("Write failed: {result}")));
+            return Err(FerriumError::Raft(format!("Write failed: {result}")));
         }
 
         Ok(())
     }
 
     /// Get a value by key
-    pub async fn get(&mut self, key: String) -> Result<Option<String>, FerriteError> {
+    pub async fn get(&mut self, key: String) -> Result<Option<String>, FerriumError> {
         let leader = self.get_leader().await?;
 
         let result = self.send_request(&leader, "read", json!(key)).await?;
 
         if let Some(error) = result.get("error") {
-            return Err(FerriteError::Raft(format!("Read failed: {error}")));
+            return Err(FerriumError::Raft(format!("Read failed: {error}")));
         }
 
         Ok(result
@@ -194,21 +194,21 @@ impl FerriteClient {
     }
 
     /// Delete a key
-    pub async fn delete(&mut self, key: String) -> Result<(), FerriteError> {
+    pub async fn delete(&mut self, key: String) -> Result<(), FerriumError> {
         let leader = self.get_leader().await?;
         let request = KvRequest::Delete { key };
 
         let result = self.send_request(&leader, "write", json!(request)).await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!("Delete failed: {result}")));
+            return Err(FerriumError::Raft(format!("Delete failed: {result}")));
         }
 
         Ok(())
     }
 
     /// Initialize a single-node cluster
-    pub async fn init(&mut self) -> Result<(), FerriteError> {
+    pub async fn init(&mut self) -> Result<(), FerriumError> {
         // Try to initialize on any node
         for addr in self.nodes.clone() {
             match self.send_request(&addr, "init", json!({})).await {
@@ -225,13 +225,13 @@ impl FerriteClient {
             }
         }
 
-        Err(FerriteError::Network(
+        Err(FerriumError::Network(
             "Failed to initialize cluster".to_string(),
         ))
     }
 
     /// Add a learner node to the cluster
-    pub async fn add_learner(&mut self, node_id: NodeId, addr: String) -> Result<(), FerriteError> {
+    pub async fn add_learner(&mut self, node_id: NodeId, addr: String) -> Result<(), FerriumError> {
         let leader = self.get_leader().await?;
 
         let result = self
@@ -239,7 +239,7 @@ impl FerriteClient {
             .await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!("Add learner failed: {result}")));
+            return Err(FerriumError::Raft(format!("Add learner failed: {result}")));
         }
 
         // Add the new node to our list
@@ -249,7 +249,7 @@ impl FerriteClient {
     }
 
     /// Change cluster membership
-    pub async fn change_membership(&mut self, members: Vec<NodeId>) -> Result<(), FerriteError> {
+    pub async fn change_membership(&mut self, members: Vec<NodeId>) -> Result<(), FerriumError> {
         let leader = self.get_leader().await?;
 
         let result = self
@@ -257,7 +257,7 @@ impl FerriteClient {
             .await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!(
+            return Err(FerriumError::Raft(format!(
                 "Change membership failed: {result}"
             )));
         }
@@ -266,7 +266,7 @@ impl FerriteClient {
     }
 
     /// Get cluster metrics
-    pub async fn metrics(&self) -> Result<serde_json::Value, FerriteError> {
+    pub async fn metrics(&self) -> Result<serde_json::Value, FerriumError> {
         for addr in &self.nodes {
             match self.get_metrics(addr).await {
                 Ok(metrics) => return Ok(metrics),
@@ -274,11 +274,11 @@ impl FerriteClient {
             }
         }
 
-        Err(FerriteError::Network("No nodes available".to_string()))
+        Err(FerriumError::Network("No nodes available".to_string()))
     }
 
     /// Wait for cluster to be ready (all nodes online)
-    pub async fn wait_for_ready(&mut self, timeout: Duration) -> Result<(), FerriteError> {
+    pub async fn wait_for_ready(&mut self, timeout: Duration) -> Result<(), FerriumError> {
         let start = std::time::Instant::now();
 
         while start.elapsed() < timeout {
@@ -291,7 +291,7 @@ impl FerriteClient {
             }
         }
 
-        Err(FerriteError::Network(
+        Err(FerriumError::Network(
             "Timeout waiting for cluster to be ready".to_string(),
         ))
     }

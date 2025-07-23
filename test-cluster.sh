@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help)
-            echo "Ferrite Comprehensive Cluster Test"
+            echo "Ferrium Comprehensive Cluster Test"
             echo ""
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Environment Variables:"
             echo "  CI=true                   Automatically enables CI mode"
-            echo "  FERRITE_AUTO_CLEANUP=N    Auto cleanup after N seconds"
+            echo "  FERRIUM_AUTO_CLEANUP=N    Auto cleanup after N seconds"
             echo ""
             echo "Examples:"
             echo "  $0                        # Interactive mode (default)"
@@ -66,8 +66,8 @@ if [[ "${CI:-false}" == "true" ]] || [[ -n "${CONTINUOUS_INTEGRATION:-}" ]] || [
 fi
 
 # Check for environment variable override
-if [[ -n "${FERRITE_AUTO_CLEANUP:-}" ]]; then
-    AUTO_CLEANUP_TIMEOUT="${FERRITE_AUTO_CLEANUP}"
+if [[ -n "${FERRIUM_AUTO_CLEANUP:-}" ]]; then
+    AUTO_CLEANUP_TIMEOUT="${FERRIUM_AUTO_CLEANUP}"
     SKIP_INTERACTIVE=true
 fi
 
@@ -85,7 +85,7 @@ TEST_DIR="./test-cluster-automated"
 CONFIG_DIR="$TEST_DIR/configs"
 DATA_DIR="$TEST_DIR/data"
 LOG_DIR="$TEST_DIR/logs"
-BINARY="./target/release/ferrite-server"
+BINARY="./target/release/ferrium-server"
 
 # Node configurations
 NODE1_HTTP=21001
@@ -124,8 +124,8 @@ echo_feature() {
 cleanup() {
     echo_info "Cleaning up processes and test data..."
 
-    # Kill all ferrite-server processes
-    pkill -f "ferrite-server" || true
+    # Kill all ferrium-server processes
+    pkill -f "ferrium-server" || true
 
     # Wait for processes to terminate
     sleep 2
@@ -150,7 +150,7 @@ setup_test_environment() {
     echo_info "Setting up test environment..."
 
     # Clean up any existing processes first
-    pkill -f "ferrite-server" || true
+    pkill -f "ferrium-server" || true
     sleep 2
 
     # Remove any existing test data to ensure clean start
@@ -169,7 +169,7 @@ create_node_config() {
     local config_file="$CONFIG_DIR/node${node_id}.toml"
 
     cat > "$config_file" << EOF
-# Ferrite Node ${node_id} Test Configuration
+# Ferrium Node ${node_id} Test Configuration
 [node]
 id = ${node_id}
 http_addr = "127.0.0.1:${http_port}"
@@ -221,7 +221,7 @@ max_files = 2
 enable_colors = true
 
 [cluster]
-name = "ferrite-automated-test"
+name = "ferrium-automated-test"
 expected_size = 3
 enable_auto_join = true
 leader_discovery_timeout = 30000
@@ -300,7 +300,7 @@ start_node() {
 }
 
 start_cluster() {
-    echo_feature "Starting 3-node Ferrite cluster with configuration files..."
+    echo_feature "Starting 3-node Ferrium cluster with configuration files..."
 
     start_node 1
     start_node 2
@@ -710,7 +710,7 @@ test_auto_join_functionality() {
     if [[ $successful_nodes -eq 3 ]] && [[ $total_voters -ge 2 ]]; then
         echo_success ""
         echo_success "🎊🎊🎊 AUTOMATIC CLUSTER FORMATION SUCCESS! 🎊🎊🎊"
-        echo_success "✨ Ferrite nodes can now automatically discover and join clusters!"
+        echo_success "✨ Ferrium nodes can now automatically discover and join clusters!"
         echo_success "🔧 TOML array format solved the peer configuration challenge!"
         echo_success "🤝 Auto-join infrastructure is production-ready!"
     else
@@ -810,7 +810,7 @@ show_cluster_status() {
     echo_feature "Final cluster status..."
 
     echo_info "Active processes:"
-    pgrep -f "ferrite-server" | wc -l | xargs echo "  Ferrite processes running:"
+    pgrep -f "ferrium-server" | wc -l | xargs echo "  Ferrium processes running:"
 
     echo_info "Log file sizes:"
     for i in 1 2 3; do
@@ -860,7 +860,7 @@ run_performance_test() {
 
 main() {
     echo -e "${BLUE}=================================${NC}"
-    echo -e "${BLUE}🚀 FERRITE COMPREHENSIVE CLUSTER TEST${NC}"
+    echo -e "${BLUE}🚀 FERRIUM COMPREHENSIVE CLUSTER TEST${NC}"
     echo -e "${BLUE}=================================${NC}"
 
     # Show execution mode
@@ -924,8 +924,8 @@ main() {
     # Handle different execution modes
     if [[ "$KEEP_RUNNING" == "true" ]]; then
         echo -e "${GREEN}🚀 Cluster is now running in the background for manual testing${NC}"
-        echo -e "${CYAN}💡 Process IDs: $(pgrep -f ferrite-server | tr '\n' ' ')${NC}"
-        echo -e "${YELLOW}⚠️  Remember to run: pkill -f ferrite-server (when done)${NC}"
+        echo -e "${CYAN}💡 Process IDs: $(pgrep -f ferrium-server | tr '\n' ' ')${NC}"
+        echo -e "${YELLOW}⚠️  Remember to run: pkill -f ferrium-server (when done)${NC}"
         # Don't run cleanup on exit in this mode
         trap - EXIT
         exit 0

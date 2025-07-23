@@ -46,7 +46,7 @@ max_files = 5
 enable_colors = true
 
 [cluster]
-name = "ferrite-cluster"
+name = "ferrium-cluster"
 
 [cluster.peers]
 

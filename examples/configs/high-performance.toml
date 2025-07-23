@@ -1,13 +1,13 @@
-# Ferrite High Performance Configuration
+# Ferrium High Performance Configuration
 # Optimized for high throughput and low latency in production environments
 
 [node]
 id = 1
 http_addr = "0.0.0.0:8001"
 grpc_addr = "0.0.0.0:9001"
-data_dir = "/nvme/ferrite/data"  # Use NVMe SSD for best performance
-name = "ferrite-hpc"
-description = "High-performance Ferrite node"
+data_dir = "/nvme/ferrium/data"  # Use NVMe SSD for best performance
+name = "ferrium-hpc"
+description = "High-performance Ferrium node"
 
 [network]
 request_timeout = 10000      # Lower timeout for faster failure detection
@@ -46,13 +46,13 @@ snapshot_interval = 60000            # 1 minute for frequent snapshots
 level = "warn"              # Minimal logging for performance
 format = "compact"          # Minimal format
 structured = false
-file_path = "/var/log/ferrite/hpc.log"
+file_path = "/var/log/ferrium/hpc.log"
 max_file_size = 268435456   # 256MB
 max_files = 3               # Fewer log files
 enable_colors = false
 
 [cluster]
-name = "ferrite-hpc"
+name = "ferrium-hpc"
 expected_size = 3
 
 # Example peer configuration (update with actual IPs)

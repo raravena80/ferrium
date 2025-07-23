@@ -115,7 +115,7 @@ impl ManagementServiceTrait for ManagementServiceImpl {
     ) -> Result<Response<HealthResponse>, Status> {
         Ok(Response::new(HealthResponse {
             status: "healthy".to_string(),
-            service: "ferrite".to_string(),
+            service: "ferrium".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
         }))
     }

@@ -1,6 +1,6 @@
-# Ferrite - Enterprise Distributed KV Storage with Raft Consensus
+# Ferrium - Enterprise Distributed KV Storage with Raft Consensus
 
-Ferrite is a production-ready distributed key-value storage system built in Rust using the [openraft](https://github.com/databendlabs/openraft) consensus library. It provides strong consistency guarantees similar to etcd or Consul, with comprehensive configuration management and dual-protocol support (HTTP + gRPC).
+Ferrium is a production-ready distributed key-value storage system built in Rust using the [openraft](https://github.com/databendlabs/openraft) consensus library. It provides strong consistency guarantees similar to etcd or Consul, with comprehensive configuration management and dual-protocol support (HTTP + gRPC).
 
 ## ✨ Features
 
@@ -32,11 +32,11 @@ Ferrite is a production-ready distributed key-value storage system built in Rust
 
 ## 🚀 Quick Start
 
-### 1. Build Ferrite
+### 1. Build Ferrium
 
 ```bash
-git clone https://github.com/your-org/ferrite
-cd ferrite
+git clone https://github.com/your-org/ferrium
+cd ferrium
 cargo build --release
 ```
 
@@ -44,47 +44,47 @@ cargo build --release
 
 ```bash
 # Generate a default configuration file
-./target/release/ferrite-server --generate-config ferrite.toml
+./target/release/ferrium-server --generate-config ferrium.toml
 
 # Validate your configuration
-./target/release/ferrite-server --config ferrite.toml --validate-config
+./target/release/ferrium-server --config ferrium.toml --validate-config
 ```
 
 ### 3. Single Node Development
 
 ```bash
 # Use the single-node example configuration
-./target/release/ferrite-server --config examples/configs/single-node.toml
+./target/release/ferrium-server --config examples/configs/single-node.toml
 ```
 
 ### 4. Production Cluster
 
 ```bash
 # Node 1 (Primary)
-./target/release/ferrite-server --config examples/configs/cluster-node1.toml
+./target/release/ferrium-server --config examples/configs/cluster-node1.toml
 
 # Node 2 & 3 (update configs with appropriate IDs and addresses)
-./target/release/ferrite-server --config node2.toml --id 2 --http-addr 10.0.1.11:8001
+./target/release/ferrium-server --config node2.toml --id 2 --http-addr 10.0.1.11:8001
 ```
 
 ## 📋 Configuration System
 
-Ferrite features a comprehensive configuration system supporting every aspect of the distributed system.
+Ferrium features a comprehensive configuration system supporting every aspect of the distributed system.
 
 ### Quick Configuration Setup
 
 ```bash
 # List available configuration locations
-./target/release/ferrite-server --list-config-paths
+./target/release/ferrium-server --list-config-paths
 
 # Generate default configuration
-./target/release/ferrite-server --generate-config my-config.toml
+./target/release/ferrium-server --generate-config my-config.toml
 
 # Validate configuration before deployment  
-./target/release/ferrite-server --config my-config.toml --validate-config
+./target/release/ferrium-server --config my-config.toml --validate-config
 
 # Run with configuration and CLI overrides
-./target/release/ferrite-server --config my-config.toml --log-level debug --id 42
+./target/release/ferrium-server --config my-config.toml --log-level debug --id 42
 ```
 
 ### Configuration Sections
@@ -109,7 +109,7 @@ The configuration covers all operational aspects:
 
 ## 🌐 API Reference
 
-Ferrite provides both HTTP and gRPC APIs for maximum flexibility.
+Ferrium provides both HTTP and gRPC APIs for maximum flexibility.
 
 ### HTTP REST API
 
@@ -183,17 +183,17 @@ The gRPC API provides the same functionality with better performance for service
 
 ```bash
 # Quick start with sensible defaults
-./target/release/ferrite-server --config examples/configs/single-node.toml
+./target/release/ferrium-server --config examples/configs/single-node.toml
 ```
 
 ### Docker Deployment
 
 ```dockerfile
 FROM debian:bullseye-slim
-COPY target/release/ferrite-server /usr/local/bin/
-COPY production.toml /etc/ferrite/config.toml
+COPY target/release/ferrium-server /usr/local/bin/
+COPY production.toml /etc/ferrium/config.toml
 EXPOSE 8001 9001
-CMD ["ferrite-server", "--config", "/etc/ferrite/config.toml"]
+CMD ["ferrium-server", "--config", "/etc/ferrium/config.toml"]
 ```
 
 ### Kubernetes Deployment
@@ -202,7 +202,7 @@ CMD ["ferrite-server", "--config", "/etc/ferrite/config.toml"]
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ferrite-config
+  name: ferrium-config
 data:
   config.toml: |
     [node]
@@ -219,23 +219,23 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: ferrite
+  name: ferrium
 spec:
-  serviceName: ferrite
+  serviceName: ferrium
   replicas: 3
   selector:
     matchLabels:
-      app: ferrite
+      app: ferrium
   template:
     metadata:
       labels:
-        app: ferrite
+        app: ferrium
     spec:
       containers:
-      - name: ferrite
-        image: ferrite:latest
-        command: ["ferrite-server"]
-        args: ["--config", "/etc/ferrite/config.toml"]
+      - name: ferrium
+        image: ferrium:latest
+        command: ["ferrium-server"]
+        args: ["--config", "/etc/ferrium/config.toml"]
         ports:
         - containerPort: 8001
           name: http
@@ -243,13 +243,13 @@ spec:
           name: grpc
         volumeMounts:
         - name: config
-          mountPath: /etc/ferrite
+          mountPath: /etc/ferrium
         - name: data
           mountPath: /data
       volumes:
       - name: config
         configMap:
-          name: ferrite-config
+          name: ferrium-config
   volumeClaimTemplates:
   - metadata:
       name: data
@@ -264,14 +264,14 @@ spec:
 
 ```ini
 [Unit]
-Description=Ferrite Distributed KV Store
+Description=Ferrium Distributed KV Store
 After=network.target
 
 [Service]
 Type=simple
-User=ferrite
-Group=ferrite
-ExecStart=/usr/local/bin/ferrite-server --config /etc/ferrite/config.toml
+User=ferrium
+Group=ferrium
+ExecStart=/usr/local/bin/ferrium-server --config /etc/ferrium/config.toml
 Restart=always
 RestartSec=10
 KillSignal=SIGTERM
@@ -281,7 +281,7 @@ TimeoutStopSec=30
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/ferrite /var/log/ferrite
+ReadWritePaths=/var/lib/ferrium /var/log/ferrium
 
 [Install]
 WantedBy=multi-user.target
@@ -326,7 +326,7 @@ WantedBy=multi-user.target
 
 ### Solving OpenRaft Complexity
 
-Ferrite addresses common openraft challenges:
+Ferrium addresses common openraft challenges:
 
 - **✅ Sealed Traits**: Comprehensive `TypeConfig` implementation
 - **✅ Complex Generics**: Simplified through well-defined type bounds
@@ -462,16 +462,16 @@ curl http://127.0.0.1:8003/health
 **Configuration errors:**
 ```bash
 # Validate your configuration  
-ferrite-server --config my-config.toml --validate-config
+ferrium-server --config my-config.toml --validate-config
 
 # Check configuration locations
-ferrite-server --list-config-paths
+ferrium-server --list-config-paths
 ```
 
 **Performance issues:**
 ```bash
 # Use high-performance configuration
-ferrite-server --config examples/configs/high-performance.toml
+ferrium-server --config examples/configs/high-performance.toml
 
 # Monitor metrics for bottlenecks
 watch -n 1 'curl -s http://127.0.0.1:8001/metrics | jq .current_leader'
@@ -481,10 +481,10 @@ watch -n 1 'curl -s http://127.0.0.1:8001/metrics | jq .current_leader'
 
 ```bash
 # Enable comprehensive debugging
-RUST_LOG=ferrite=debug,openraft=debug ferrite-server --config debug.toml
+RUST_LOG=ferrium=debug,openraft=debug ferrium-server --config debug.toml
 
 # JSON structured logging for analysis
-ferrite-server --config production.toml --log-level debug --format json
+ferrium-server --config production.toml --log-level debug --format json
 ```
 
 ## 📈 Roadmap
@@ -534,8 +534,8 @@ We welcome contributions! Please see our contributing guidelines:
 
 ```bash
 # Clone and setup
-git clone https://github.com/your-org/ferrite
-cd ferrite
+git clone https://github.com/your-org/ferrium
+cd ferrium
 
 # Install development dependencies
 cargo install cargo-watch
@@ -562,4 +562,4 @@ This project is licensed under the MIT OR Apache-2.0 license.
 
 **📖 For detailed configuration options, see [CONFIG.md](CONFIG.md)**
 
-**🚀 Ready to build distributed systems? Start with `ferrite-server --generate-config ferrite.toml`** 
+**🚀 Ready to build distributed systems? Start with `ferrium-server --generate-config ferrium.toml`**

@@ -234,11 +234,11 @@ pub mod raft_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ferrite.raft.RaftService/AppendEntries",
+                "/ferrium.raft.RaftService/AppendEntries",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ferrite.raft.RaftService", "AppendEntries"));
+                .insert(GrpcMethod::new("ferrium.raft.RaftService", "AppendEntries"));
             self.inner.unary(req, path, codec).await
         }
         /// Vote RPC for leader election
@@ -256,11 +256,11 @@ pub mod raft_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ferrite.raft.RaftService/Vote",
+                "/ferrium.raft.RaftService/Vote",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ferrite.raft.RaftService", "Vote"));
+                .insert(GrpcMethod::new("ferrium.raft.RaftService", "Vote"));
             self.inner.unary(req, path, codec).await
         }
         /// Install snapshot RPC
@@ -281,11 +281,11 @@ pub mod raft_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/ferrite.raft.RaftService/InstallSnapshot",
+                "/ferrium.raft.RaftService/InstallSnapshot",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("ferrite.raft.RaftService", "InstallSnapshot"));
+                .insert(GrpcMethod::new("ferrium.raft.RaftService", "InstallSnapshot"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -402,7 +402,7 @@ pub mod raft_service_server {
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             match req.uri().path() {
-                "/ferrite.raft.RaftService/AppendEntries" => {
+                "/ferrium.raft.RaftService/AppendEntries" => {
                     #[allow(non_camel_case_types)]
                     struct AppendEntriesSvc<T: RaftService>(pub Arc<T>);
                     impl<
@@ -447,7 +447,7 @@ pub mod raft_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ferrite.raft.RaftService/Vote" => {
+                "/ferrium.raft.RaftService/Vote" => {
                     #[allow(non_camel_case_types)]
                     struct VoteSvc<T: RaftService>(pub Arc<T>);
                     impl<T: RaftService> tonic::server::UnaryService<super::VoteRequest>
@@ -490,7 +490,7 @@ pub mod raft_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/ferrite.raft.RaftService/InstallSnapshot" => {
+                "/ferrium.raft.RaftService/InstallSnapshot" => {
                     #[allow(non_camel_case_types)]
                     struct InstallSnapshotSvc<T: RaftService>(pub Arc<T>);
                     impl<
@@ -570,7 +570,7 @@ pub mod raft_service_server {
         }
     }
     /// Generated gRPC service name
-    pub const SERVICE_NAME: &str = "ferrite.raft.RaftService";
+    pub const SERVICE_NAME: &str = "ferrium.raft.RaftService";
     impl<T> tonic::server::NamedService for RaftServiceServer<T> {
         const NAME: &'static str = SERVICE_NAME;
     }

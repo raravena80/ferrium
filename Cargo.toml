@@ -1,12 +1,12 @@
 [package]
-name = "ferrite"
+name = "ferrium"
 version = "0.1.0"
 edition = "2021"
 description = "A distributed KV storage system built with openraft"
 license = "Apache-2.0"
 
 [[bin]]
-name = "ferrite-server"
+name = "ferrium-server"
 path = "src/bin/main.rs"
 
 [[bin]]

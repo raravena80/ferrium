@@ -1,4 +1,4 @@
-use ferrite::grpc::{
+use ferrium::grpc::{
     kv_service_client::KvServiceClient, management_service_client::ManagementServiceClient,
     GetRequest, HealthRequest, InitializeRequest, SetRequest,
 };

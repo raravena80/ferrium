@@ -1,7 +1,7 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Use protoc-prebuilt to handle protoc binary for cross-compilation
-    let (protoc_bin, _) = protoc_prebuilt::init("21.12")
-        .map_err(|e| format!("Failed to initialize protoc: {}", e))?;
+    let (protoc_bin, _) =
+        protoc_prebuilt::init("21.12").map_err(|e| format!("Failed to initialize protoc: {e}"))?;
     std::env::set_var("PROTOC", protoc_bin);
 
     // Compile protobuf files into Rust code

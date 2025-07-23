@@ -1,8 +1,8 @@
-# Ferrite Implementation Status
+# Ferrium Implementation Status
 
 ## 🎉 **PRODUCTION READY - 100% COMPLETE**
 
-Ferrite has evolved from a proof-of-concept into a **production-ready, enterprise-grade distributed KV storage system** with comprehensive features, successful multi-node cluster testing, and **fully working automatic cluster formation**.
+Ferrium has evolved from a proof-of-concept into a **production-ready, enterprise-grade distributed KV storage system** with comprehensive features, successful multi-node cluster testing, and **fully working automatic cluster formation**.
 
 ## ✅ **Fully Implemented & Tested Features**
 
@@ -19,7 +19,7 @@ Ferrite has evolved from a proof-of-concept into a **production-ready, enterpris
 - **✅ TOML Configuration Files**: Comprehensive settings management with 60+ parameters
 - **✅ TOML Array Format**: Modern `[[cluster.peer]]` configuration for peer lists
 - **✅ CLI Override Support**: Environment-specific parameter overrides
-- **✅ Multiple Config Locations**: Automatic discovery from standard paths (`~/.ferrite.toml`, `/etc/ferrite/`, etc.)
+- **✅ Multiple Config Locations**: Automatic discovery from standard paths (`~/.ferrium.toml`, `/etc/ferrium/`, etc.)
 - **✅ Configuration Validation**: Extensive validation with helpful error messages
 - **✅ Configuration Generation**: `--generate-config` for default configuration creation
 - **✅ Hot Configuration**: Runtime configuration updates where applicable
@@ -161,28 +161,28 @@ Ferrite has evolved from a proof-of-concept into a **production-ready, enterpris
 ### 1. **Single Node Development**
 ```bash
 # Generate configuration
-./target/release/ferrite-server --generate-config ferrite.toml
+./target/release/ferrium-server --generate-config ferrium.toml
 
 # Validate configuration
-./target/release/ferrite-server --config ferrite.toml --validate-config
+./target/release/ferrium-server --config ferrium.toml --validate-config
 
 # Start single node
-./target/release/ferrite-server --config examples/configs/single-node.toml
+./target/release/ferrium-server --config examples/configs/single-node.toml
 ```
 
 ### 2. **Auto-Join 3-Node Cluster (Recommended)**
 ```bash
 # Create configurations with peer lists
-./target/release/ferrite-server --generate-config node1.toml
+./target/release/ferrium-server --generate-config node1.toml
 # Edit node1.toml to add [[cluster.peer]] entries for all nodes
 
 # Node 1 (First node - becomes leader)
-./target/release/ferrite-server --config node1.toml
+./target/release/ferrium-server --config node1.toml
 curl -X POST http://127.0.0.1:21001/init
 
 # Nodes 2 & 3 (Auto-join automatically)
-./target/release/ferrite-server --config node2.toml  # Auto-joins Node 1
-./target/release/ferrite-server --config node3.toml  # Auto-joins Node 1
+./target/release/ferrium-server --config node2.toml  # Auto-joins Node 1
+./target/release/ferrium-server --config node3.toml  # Auto-joins Node 1
 
 # Promote to voting members
 curl -X POST -H "Content-Type: application/json" -d '[1,2,3]' \
@@ -206,7 +206,7 @@ curl -X POST -H "Content-Type: application/json" \
 ## 📁 **Project Structure**
 
 ```
-ferrite/
+ferrium/
 ├── src/
 │   ├── bin/
 │   │   ├── main.rs              # Server binary with comprehensive config system + auto-join
@@ -252,7 +252,7 @@ ferrite/
 
 ## 🌟 **Key Differentiators**
 
-Ferrite now stands as a **complete alternative to etcd, Consul, and other distributed KV stores** with:
+Ferrium now stands as a **complete alternative to etcd, Consul, and other distributed KV stores** with:
 
 ### **🔧 Configuration-First Architecture**
 - **Declarative Configuration**: Everything configurable via TOML files
@@ -279,7 +279,7 @@ Ferrite now stands as a **complete alternative to etcd, Consul, and other distri
 
 ## 🚀 **Ready for Production Use**
 
-Ferrite is now suitable for:
+Ferrium is now suitable for:
 - **🏢 Enterprise Deployments**: Configuration management, monitoring, compliance
 - **☁️ Cloud-Native Environments**: Kubernetes, service mesh, microservices with auto-join
 - **🔧 High-Performance Systems**: Tunable for throughput or latency requirements
@@ -302,4 +302,4 @@ Ferrite is now suitable for:
 
 **Status: 🎉 READY FOR PRODUCTION DEPLOYMENT 🎉**
 
-**Auto-join functionality makes Ferrite exceptionally easy to deploy and scale in production environments!**
+**Auto-join functionality makes Ferrium exceptionally easy to deploy and scale in production environments!**

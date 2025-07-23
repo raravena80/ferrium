@@ -31,7 +31,7 @@ test-cluster/
 
 # Configuration files (may contain secrets)
 config.toml
-ferrite.toml
+ferrium.toml
 
 # Development scripts
 test-cluster.sh

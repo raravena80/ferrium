@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial Ferrite distributed key-value storage implementation
+- Initial Ferrium distributed key-value storage implementation
 - Raft consensus protocol using openraft library
 - RocksDB persistent storage backend
 - HTTP REST API for cluster management and data operations
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - TBD
 
 ### Added
-- Initial release of Ferrite distributed key-value storage system
+- Initial release of Ferrium distributed key-value storage system
 - Basic Raft consensus implementation
 - HTTP and gRPC API support
 - Docker containerization

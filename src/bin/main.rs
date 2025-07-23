@@ -8,20 +8,20 @@ use openraft::Raft;
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 // gRPC imports
-use ferrite::grpc::{
+use ferrium::grpc::{
     services::{KvServiceImpl, ManagementServiceImpl, RaftServiceImpl},
     KvServiceServer, ManagementServiceServer, RaftServiceServer,
 };
 use tonic::transport::Server;
 
-use ferrite::{
-    config::{create_raft_config, ConfigError, FerriteConfig, NodeId},
+use ferrium::{
+    config::{create_raft_config, ConfigError, FerriumConfig, NodeId},
     network::{api, management::ManagementApi, HttpNetworkFactory},
     storage::new_storage,
 };
 
 #[derive(Parser)]
-#[command(name = "ferrite-server")]
+#[command(name = "ferrium-server")]
 #[command(about = "A distributed KV storage server using Raft consensus")]
 #[command(version)]
 pub struct Args {
@@ -96,7 +96,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize logging based on configuration
     setup_logging(&config)?;
 
-    tracing::info!("🚀 Starting Ferrite node {}", config.node.id);
+    tracing::info!("🚀 Starting Ferrium node {}", config.node.id);
     tracing::info!(
         "📁 Configuration loaded from: {}",
         args.config
@@ -268,14 +268,14 @@ async fn main() -> std::io::Result<()> {
 }
 
 /// Load configuration with CLI overrides
-fn load_configuration(args: &Args) -> Result<FerriteConfig, ConfigError> {
+fn load_configuration(args: &Args) -> Result<FerriumConfig, ConfigError> {
     // Load base configuration
     let mut config = match &args.config {
         Some(path) => {
             tracing::info!("📄 Loading config from: {}", path.display());
-            FerriteConfig::from_file(path)?
+            FerriumConfig::from_file(path)?
         }
-        None => FerriteConfig::load_default()?,
+        None => FerriumConfig::load_default()?,
     };
 
     // Apply CLI overrides
@@ -309,7 +309,7 @@ fn load_configuration(args: &Args) -> Result<FerriteConfig, ConfigError> {
 }
 
 /// Setup logging based on configuration
-fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
+fn setup_logging(config: &FerriumConfig) -> std::io::Result<()> {
     use tracing_subscriber::fmt::time::ChronoUtc;
 
     let level = config
@@ -324,7 +324,7 @@ fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
         })?;
 
     let env_filter = EnvFilter::from_default_env()
-        .add_directive(format!("ferrite={level}").parse().unwrap())
+        .add_directive(format!("ferrium={level}").parse().unwrap())
         .add_directive(
             format!(
                 "openraft={}",
@@ -345,13 +345,13 @@ fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
         .with_target(config.logging.structured);
 
     match (&config.logging.format, config.logging.enable_colors) {
-        (ferrite::config::LogFormat::Json, _) => subscriber.json().init(),
-        (ferrite::config::LogFormat::Compact, true) => subscriber.compact().with_ansi(true).init(),
-        (ferrite::config::LogFormat::Compact, false) => {
+        (ferrium::config::LogFormat::Json, _) => subscriber.json().init(),
+        (ferrium::config::LogFormat::Compact, true) => subscriber.compact().with_ansi(true).init(),
+        (ferrium::config::LogFormat::Compact, false) => {
             subscriber.compact().with_ansi(false).init()
         }
-        (ferrite::config::LogFormat::Pretty, true) => subscriber.pretty().with_ansi(true).init(),
-        (ferrite::config::LogFormat::Pretty, false) => subscriber.pretty().with_ansi(false).init(),
+        (ferrium::config::LogFormat::Pretty, true) => subscriber.pretty().with_ansi(true).init(),
+        (ferrium::config::LogFormat::Pretty, false) => subscriber.pretty().with_ansi(false).init(),
     }
 
     Ok(())
@@ -359,7 +359,7 @@ fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
 
 /// Generate a default configuration file
 fn generate_default_config(path: PathBuf) -> std::io::Result<()> {
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
 
     config
         .to_file(&path)
@@ -369,8 +369,8 @@ fn generate_default_config(path: PathBuf) -> std::io::Result<()> {
         "✅ Generated default configuration file: {}",
         path.display()
     );
-    println!("📝 Edit the file to customize your Ferrite node settings");
-    println!("🚀 Start with: ferrite-server --config {}", path.display());
+    println!("📝 Edit the file to customize your Ferrium node settings");
+    println!("🚀 Start with: ferrium-server --config {}", path.display());
 
     Ok(())
 }
@@ -380,7 +380,7 @@ fn list_config_paths() -> std::io::Result<()> {
     println!("📍 Default configuration file locations (in order of precedence):");
     println!();
 
-    for (i, path) in FerriteConfig::default_config_paths().iter().enumerate() {
+    for (i, path) in FerriumConfig::default_config_paths().iter().enumerate() {
         let exists = if path.exists() { "✅" } else { "❌" };
         println!("  {}. {} {}", i + 1, exists, path.display());
     }

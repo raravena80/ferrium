@@ -1,37 +1,37 @@
-# Ferrite Configuration System
+# Ferrium Configuration System
 
-Ferrite supports comprehensive configuration through TOML files, with full CLI override support for flexible deployment scenarios.
+Ferrium supports comprehensive configuration through TOML files, with full CLI override support for flexible deployment scenarios.
 
 ## Quick Start
 
 1. **Generate default configuration:**
    ```bash
-   ferrite-server --generate-config ferrite.toml
+   ferrium-server --generate-config ferrium.toml
    ```
 
 2. **Validate configuration:**
    ```bash
-   ferrite-server --config ferrite.toml --validate-config
+   ferrium-server --config ferrium.toml --validate-config
    ```
 
 3. **Run with configuration:**
    ```bash
-   ferrite-server --config ferrite.toml
+   ferrium-server --config ferrium.toml
    ```
 
 ## Configuration File Locations
 
-Ferrite searches for configuration files in the following order:
+Ferrium searches for configuration files in the following order:
 
 ```bash
-ferrite-server --list-config-paths
+ferrium-server --list-config-paths
 ```
 
-1. `ferrite.toml` (current directory)
-2. `config/ferrite.toml` 
-3. `/etc/ferrite/config.toml`
-4. `~/.config/ferrite/config.toml`
-5. `~/.ferrite.toml`
+1. `ferrium.toml` (current directory)
+2. `config/ferrium.toml` 
+3. `/etc/ferrium/config.toml`
+4. `~/.config/ferrium/config.toml`
+5. `~/.ferrium.toml`
 
 ## Configuration Sections
 
@@ -42,7 +42,7 @@ id = 1                                    # Unique node identifier
 http_addr = "127.0.0.1:8001"            # HTTP API bind address
 grpc_addr = "127.0.0.1:9001"            # gRPC API bind address
 data_dir = "./data"                      # Data directory
-name = "ferrite-node-1"                 # Optional node name
+name = "ferrium-node-1"                 # Optional node name
 description = "Primary node"             # Optional description
 ```
 
@@ -94,7 +94,7 @@ snapshot_interval = 300000               # Snapshot interval (ms)
 level = "info"                          # "trace", "debug", "info", "warn", "error"
 format = "pretty"                       # "json", "pretty", "compact"
 structured = false                      # Enable structured logging
-file_path = "./logs/ferrite.log"        # Log file path (optional)
+file_path = "./logs/ferrium.log"        # Log file path (optional)
 max_file_size = 104857600               # Max log file size (bytes)
 max_files = 5                           # Number of log files to keep
 enable_colors = true                    # Enable ANSI colors
@@ -103,7 +103,7 @@ enable_colors = true                    # Enable ANSI colors
 ### Cluster Configuration
 ```toml
 [cluster]
-name = "ferrite-cluster"                # Cluster name
+name = "ferrium-cluster"                # Cluster name
 expected_size = 3                       # Expected cluster size
 
 # Define peer nodes
@@ -123,9 +123,9 @@ interval = 30000                        # Discovery interval (ms)
 ```toml
 [security]
 enable_tls = true                       # Enable TLS
-cert_file = "/etc/ferrite/tls/server.crt"
-key_file = "/etc/ferrite/tls/server.key"
-ca_file = "/etc/ferrite/tls/ca.crt"
+cert_file = "/etc/ferrium/tls/server.crt"
+key_file = "/etc/ferrium/tls/server.key"
+ca_file = "/etc/ferrium/tls/ca.crt"
 enable_mtls = true                      # Enable mutual TLS
 auth_method = "certificate"             # "none", "token", "certificate", "jwt"
 ```
@@ -136,30 +136,30 @@ Any configuration option can be overridden via command line:
 
 ```bash
 # Override node configuration
-ferrite-server --config ferrite.toml --id 42 --http-addr 0.0.0.0:8080
+ferrium-server --config ferrium.toml --id 42 --http-addr 0.0.0.0:8080
 
 # Override logging
-ferrite-server --config ferrite.toml --log-level debug
+ferrium-server --config ferrium.toml --log-level debug
 
 # Override data directory
-ferrite-server --config ferrite.toml --data-dir /nvme/ferrite
+ferrium-server --config ferrium.toml --data-dir /nvme/ferrium
 ```
 
 ## Example Configurations
 
 ### Single Node (Development)
 ```bash
-ferrite-server --config examples/configs/single-node.toml
+ferrium-server --config examples/configs/single-node.toml
 ```
 
 ### Cluster Node (Production)
 ```bash
-ferrite-server --config examples/configs/cluster-node1.toml
+ferrium-server --config examples/configs/cluster-node1.toml
 ```
 
 ### High Performance
 ```bash
-ferrite-server --config examples/configs/high-performance.toml
+ferrium-server --config examples/configs/high-performance.toml
 ```
 
 ## Performance Tuning
@@ -199,13 +199,13 @@ The configuration system performs comprehensive validation:
 ### Systemd Service
 ```ini
 [Unit]
-Description=Ferrite Distributed KV Store
+Description=Ferrium Distributed KV Store
 After=network.target
 
 [Service]
 Type=simple
-User=ferrite
-ExecStart=/usr/local/bin/ferrite-server --config /etc/ferrite/config.toml
+User=ferrium
+ExecStart=/usr/local/bin/ferrium-server --config /etc/ferrium/config.toml
 Restart=always
 RestartSec=10
 
@@ -216,10 +216,10 @@ WantedBy=multi-user.target
 ### Docker
 ```dockerfile
 FROM debian:bullseye-slim
-COPY ferrite-server /usr/local/bin/
-COPY config.toml /etc/ferrite/
+COPY ferrium-server /usr/local/bin/
+COPY config.toml /etc/ferrium/
 EXPOSE 8001 9001
-CMD ["ferrite-server", "--config", "/etc/ferrite/config.toml"]
+CMD ["ferrium-server", "--config", "/etc/ferrium/config.toml"]
 ```
 
 ### Kubernetes
@@ -227,7 +227,7 @@ CMD ["ferrite-server", "--config", "/etc/ferrite/config.toml"]
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ferrite-config
+  name: ferrium-config
 data:
   config.toml: |
     [node]

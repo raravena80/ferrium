@@ -6,7 +6,7 @@
 # Cargo
 .cargo/
 
-# Ferrite-specific
+# Ferrium-specific
 /data/
 data/
 node-*/
@@ -66,9 +66,9 @@ core.*
 # *.lock  # Commented out so Cargo.lock gets committed
 
 # Binary distributions
-ferrite-server
-ferrite-client
-ferrite
+ferrium-server
+ferrium-client
+ferrium
 
 # Cluster configuration
 cluster.json

@@ -4,7 +4,7 @@ use tempfile::TempDir;
 
 #[test]
 fn test_default_config_creation() {
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
 
     // Test default values
     assert_eq!(config.node.id, 1);
@@ -38,7 +38,7 @@ fn test_default_config_creation() {
     assert_eq!(config.raft.election_timeout_max, Duration::from_millis(500));
 
     // Test cluster defaults
-    assert_eq!(config.cluster.name, "ferrite-cluster");
+    assert_eq!(config.cluster.name, "ferrium-cluster");
     assert!(config.cluster.enable_auto_join);
     assert!(config.cluster.auto_accept_learners);
 
@@ -50,13 +50,13 @@ fn test_default_config_creation() {
 
 #[test]
 fn test_config_validation_valid() {
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
     assert!(config.validate().is_ok());
 }
 
 #[test]
 fn test_config_validation_invalid_node_id() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
     config.node.id = 0; // Invalid node ID
 
     let result = config.validate();
@@ -69,7 +69,7 @@ fn test_config_validation_invalid_node_id() {
 
 #[test]
 fn test_config_validation_invalid_timeouts() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
     config.raft.election_timeout_min = Duration::from_millis(300);
     config.raft.election_timeout_max = Duration::from_millis(150); // Invalid: min > max
 
@@ -83,7 +83,7 @@ fn test_config_validation_invalid_timeouts() {
 
 #[test]
 fn test_config_validation_same_addresses() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
     config.node.grpc_addr = config.node.http_addr; // Same addresses - invalid
 
     let result = config.validate();
@@ -96,7 +96,7 @@ fn test_config_validation_same_addresses() {
 
 #[test]
 fn test_config_validation_invalid_log_level() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
     config.logging.level = "invalid_level".to_string();
 
     let result = config.validate();
@@ -109,14 +109,14 @@ fn test_config_validation_invalid_log_level() {
 
 #[test]
 fn test_toml_serialization_deserialization() {
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
 
     // Serialize to TOML
     let toml_content = toml::to_string_pretty(&config).expect("Failed to serialize to TOML");
     assert!(!toml_content.is_empty());
 
     // Deserialize back
-    let deserialized: FerriteConfig =
+    let deserialized: FerriumConfig =
         toml::from_str(&toml_content).expect("Failed to deserialize from TOML");
 
     // Compare key fields (can't use PartialEq due to SocketAddr)
@@ -206,7 +206,7 @@ enable_mtls = false
 auth_method = "none"
 "#;
 
-    let config: FerriteConfig =
+    let config: FerriumConfig =
         toml::from_str(toml_content).expect("Failed to parse TOML with peer array");
 
     assert_eq!(config.cluster.name, "test-cluster");
@@ -238,7 +238,7 @@ fn test_file_io_operations() {
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
     let config_path = temp_dir.path().join("test_config.toml");
 
-    let original_config = FerriteConfig::default();
+    let original_config = FerriumConfig::default();
 
     // Test saving to file
     original_config
@@ -248,7 +248,7 @@ fn test_file_io_operations() {
 
     // Test loading from file
     let loaded_config =
-        FerriteConfig::from_file(&config_path).expect("Failed to load config from file");
+        FerriumConfig::from_file(&config_path).expect("Failed to load config from file");
 
     // Compare key fields
     assert_eq!(original_config.node.id, loaded_config.node.id);
@@ -264,7 +264,7 @@ fn test_file_io_invalid_toml() {
     // Write invalid TOML
     fs::write(&config_path, "invalid toml content [[[").expect("Failed to write file");
 
-    let result = FerriteConfig::from_file(&config_path);
+    let result = FerriumConfig::from_file(&config_path);
     assert!(result.is_err());
 
     match result.unwrap_err() {
@@ -275,7 +275,7 @@ fn test_file_io_invalid_toml() {
 
 #[test]
 fn test_file_io_nonexistent_file() {
-    let result = FerriteConfig::from_file("/nonexistent/path/config.toml");
+    let result = FerriumConfig::from_file("/nonexistent/path/config.toml");
     assert!(result.is_err());
 
     match result.unwrap_err() {
@@ -286,7 +286,7 @@ fn test_file_io_nonexistent_file() {
 
 #[test]
 fn test_default_config_paths() {
-    let paths = FerriteConfig::default_config_paths();
+    let paths = FerriumConfig::default_config_paths();
 
     // Should contain at least user config and system config paths
     assert!(paths.len() >= 2);
@@ -296,7 +296,7 @@ fn test_default_config_paths() {
     let combined = paths_str.join(" ");
 
     // Should contain user directory path
-    assert!(combined.contains("ferrite") || combined.contains(".ferrite"));
+    assert!(combined.contains("ferrium") || combined.contains(".ferrium"));
 
     // Should contain system path
     assert!(combined.contains("/etc") || combined.contains("system"));
@@ -306,12 +306,12 @@ fn test_default_config_paths() {
 fn test_load_default_config() {
     // This should not fail even if no config files exist
     // It should return the default configuration
-    let result = FerriteConfig::load_default();
+    let result = FerriumConfig::load_default();
     assert!(result.is_ok());
 
     let config = result.unwrap();
     assert_eq!(config.node.id, 1); // Default node ID
-    assert_eq!(config.cluster.name, "ferrite-cluster"); // Default cluster name
+    assert_eq!(config.cluster.name, "ferrium-cluster"); // Default cluster name
 }
 
 #[test]
@@ -354,7 +354,7 @@ fn test_peer_config_with_id() {
 
 #[test]
 fn test_get_all_peers_combined() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
 
     // Add a peer using the old HashMap format
     let old_peer = PeerConfig {
@@ -473,7 +473,7 @@ fn test_auth_method_serialization() {
 #[test]
 fn test_duration_serialization_with_serde_with() {
     // Test that durations are properly serialized as milliseconds
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
     let toml_content = toml::to_string(&config).expect("Failed to serialize config");
 
     // Should contain duration values as milliseconds

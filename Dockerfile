@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     clang \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /usr/src/ferrite
+WORKDIR /usr/src/ferrium
 
 # Copy dependency manifests
 COPY Cargo.toml Cargo.lock ./
@@ -37,23 +37,23 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN groupadd -r ferrite && useradd -r -g ferrite ferrite
+RUN groupadd -r ferrium && useradd -r -g ferrium ferrium
 
 # Create directories
-RUN mkdir -p /etc/ferrite /var/lib/ferrite && \
-    chown -R ferrite:ferrite /var/lib/ferrite
+RUN mkdir -p /etc/ferrium /var/lib/ferrium && \
+    chown -R ferrium:ferrium /var/lib/ferrium
 
 # Copy the binary
-COPY --from=builder /usr/src/ferrite/target/release/ferrite-server /usr/local/bin/ferrite-server
+COPY --from=builder /usr/src/ferrium/target/release/ferrium-server /usr/local/bin/ferrium-server
 
 # Set permissions
-RUN chmod +x /usr/local/bin/ferrite-server
+RUN chmod +x /usr/local/bin/ferrium-server
 
 # Switch to non-root user
-USER ferrite
+USER ferrium
 
 # Default data directory
-VOLUME ["/var/lib/ferrite"]
+VOLUME ["/var/lib/ferrium"]
 
 # Default ports (HTTP API, gRPC, Raft)
 EXPOSE 8001 9001
@@ -63,4 +63,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8001/health || exit 1
 
 # Default command
-CMD ["ferrite-server", "--data-dir", "/var/lib/ferrite", "--http-addr", "0.0.0.0:8001", "--grpc-addr", "0.0.0.0:9001"] 
+CMD ["ferrium-server", "--data-dir", "/var/lib/ferrium", "--http-addr", "0.0.0.0:8001", "--grpc-addr", "0.0.0.0:9001"]

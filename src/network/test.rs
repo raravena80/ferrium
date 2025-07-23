@@ -1,6 +1,6 @@
 use super::management::ManagementApi;
 use super::*;
-use crate::config::{FerriteConfig, PeerConfig, PeerConfigWithId};
+use crate::config::{FerriumConfig, PeerConfig, PeerConfigWithId};
 use std::collections::HashMap;
 use tempfile::TempDir;
 
@@ -8,8 +8,8 @@ use tempfile::TempDir;
 fn create_test_config_with_peers(
     node_id: NodeId,
     peers: Vec<(NodeId, &str, &str)>,
-) -> FerriteConfig {
-    let mut config = FerriteConfig::default();
+) -> FerriumConfig {
+    let mut config = FerriumConfig::default();
     config.node.id = node_id;
     config.node.http_addr = format!("127.0.0.1:{}", 8000 + node_id).parse().unwrap();
 
@@ -33,7 +33,7 @@ fn create_test_config_with_peers(
 /// Note: This function may appear unused when running under Miri, as all tests
 /// that use it are conditionally compiled with #[cfg(not(miri))]
 #[allow(dead_code)]
-async fn create_test_management_api(node_id: NodeId, config: FerriteConfig) -> ManagementApi {
+async fn create_test_management_api(node_id: NodeId, config: FerriumConfig) -> ManagementApi {
     use crate::storage::new_storage;
     use openraft::Raft;
 
@@ -236,7 +236,7 @@ fn test_should_auto_accept_learner() {
 #[test]
 fn test_peer_configuration_formats() {
     // Test both HashMap and array formats
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
 
     // Add peer in HashMap format
     let peer1 = PeerConfig {
@@ -282,7 +282,7 @@ fn test_peer_configuration_formats() {
 
 #[test]
 fn test_cluster_config_timeouts() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
 
     // Test default timeout values
     assert!(config.cluster.leader_discovery_timeout > Duration::from_secs(0));
@@ -319,7 +319,7 @@ async fn test_network_error_handling() {
 
 #[test]
 fn test_auto_join_configuration_validation() {
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
 
     // Test enabling auto-join
     config.cluster.enable_auto_join = true;
@@ -437,7 +437,7 @@ fn test_configuration_edge_cases() {
     // Test edge cases in configuration that might affect network behavior
 
     // Very short timeouts
-    let mut config = FerriteConfig::default();
+    let mut config = FerriumConfig::default();
     config.cluster.leader_discovery_timeout = Duration::from_millis(1);
     config.cluster.auto_join_timeout = Duration::from_millis(1);
     config.cluster.auto_join_retry_interval = Duration::from_millis(1);

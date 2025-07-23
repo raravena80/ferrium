@@ -1,12 +1,12 @@
 use std::time::Duration;
 
-use ferrite::{client::FerriteClient, config::FerriteConfig};
+use ferrium::{client::FerriumClient, config::FerriumConfig};
 
 #[tokio::test]
 #[ignore] // Ignored by default as it requires running servers
 async fn test_cluster_integration() {
     // This test would:
-    // 1. Start multiple ferrite-server instances
+    // 1. Start multiple ferrium-server instances
     // 2. Initialize a cluster
     // 3. Perform read/write operations
     // 4. Test leader election and failover
@@ -18,16 +18,16 @@ async fn test_cluster_integration() {
 
 #[tokio::test]
 async fn test_basic_configuration() {
-    let config = FerriteConfig::default();
+    let config = FerriumConfig::default();
     assert!(config.node.id > 0);
     assert_eq!(config.node.http_addr.port(), 8001);
 }
 
 #[tokio::test]
 #[ignore]
-async fn test_ferrite_client_basic() {
+async fn test_ferrium_client_basic() {
     // Simple test to verify the client can be created
-    let mut client = FerriteClient::new(vec!["127.0.0.1:8001".to_string()]);
+    let mut client = FerriumClient::new(vec!["127.0.0.1:8001".to_string()]);
 
     // Try to connect but expect it to fail (no server running)
     // This tests the error handling path

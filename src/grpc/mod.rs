@@ -1,14 +1,14 @@
 // Generated protobuf code
 pub mod kv {
-    include!("ferrite.kv.rs");
+    include!("ferrium.kv.rs");
 }
 
 pub mod management {
-    include!("ferrite.management.rs");
+    include!("ferrium.management.rs");
 }
 
 pub mod raft {
-    include!("ferrite.raft.rs");
+    include!("ferrium.raft.rs");
 }
 
 // Service implementations

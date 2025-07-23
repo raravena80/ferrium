@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize storage
     let (log_store, state_machine_store) = new_storage("./test_data")
         .await
-        .map_err(|e| format!("Storage error: {}", e))?;
+        .map_err(|e| format!("Storage error: {e}"))?;
 
     // Initialize network
     let network_factory = HttpNetworkFactory::new();
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             state_machine_store,
         )
         .await
-        .map_err(|e| format!("Raft error: {}", e))?,
+        .map_err(|e| format!("Raft error: {e}"))?,
     );
 
     // Create management API

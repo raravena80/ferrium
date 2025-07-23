@@ -101,11 +101,13 @@ impl FerriteClient {
 
     /// Get cluster metrics from a specific node
     async fn get_metrics(&self, addr: &str) -> Result<serde_json::Value, FerriteError> {
-        let url = format!("http://{}/metrics", addr);
-        let response =
-            self.client.get(&url).send().await.map_err(|e| {
-                FerriteError::Network(format!("Failed to connect to {}: {}", addr, e))
-            })?;
+        let url = format!("http://{addr}/metrics");
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| FerriteError::Network(format!("Failed to connect to {addr}: {e}")))?;
 
         if !response.status().is_success() {
             return Err(FerriteError::Network(format!(
@@ -116,7 +118,7 @@ impl FerriteClient {
         }
 
         let metrics: serde_json::Value = response.json().await.map_err(|e| {
-            FerriteError::Network(format!("Failed to parse metrics from {}: {}", addr, e))
+            FerriteError::Network(format!("Failed to parse metrics from {addr}: {e}"))
         })?;
 
         Ok(metrics)
@@ -129,7 +131,7 @@ impl FerriteClient {
         endpoint: &str,
         payload: serde_json::Value,
     ) -> Result<serde_json::Value, FerriteError> {
-        let url = format!("http://{}/{}", addr, endpoint);
+        let url = format!("http://{addr}/{endpoint}");
         debug!("Sending request to: {}", url);
 
         let response = self
@@ -140,7 +142,7 @@ impl FerriteClient {
             .await
             .map_err(|e| {
                 error!("Network error sending to {}: {}", url, e);
-                FerriteError::Network(format!("Failed to connect to {}: {}", addr, e))
+                FerriteError::Network(format!("Failed to connect to {addr}: {e}"))
             })?;
 
         if !response.status().is_success() {
@@ -148,14 +150,13 @@ impl FerriteClient {
             let body = response.text().await.unwrap_or_default();
             error!("Request failed with status {}: {}", status, body);
             return Err(FerriteError::Network(format!(
-                "Request failed with status {}: {}",
-                status, body
+                "Request failed with status {status}: {body}"
             )));
         }
 
         let result: serde_json::Value = response.json().await.map_err(|e| {
             error!("Failed to parse response from {}: {}", url, e);
-            FerriteError::Network(format!("Failed to parse response: {}", e))
+            FerriteError::Network(format!("Failed to parse response: {e}"))
         })?;
 
         debug!("Request to {} completed successfully", url);
@@ -170,7 +171,7 @@ impl FerriteClient {
         let result = self.send_request(&leader, "write", json!(request)).await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!("Write failed: {}", result)));
+            return Err(FerriteError::Raft(format!("Write failed: {result}")));
         }
 
         Ok(())
@@ -183,7 +184,7 @@ impl FerriteClient {
         let result = self.send_request(&leader, "read", json!(key)).await?;
 
         if let Some(error) = result.get("error") {
-            return Err(FerriteError::Raft(format!("Read failed: {}", error)));
+            return Err(FerriteError::Raft(format!("Read failed: {error}")));
         }
 
         Ok(result
@@ -200,7 +201,7 @@ impl FerriteClient {
         let result = self.send_request(&leader, "write", json!(request)).await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!("Delete failed: {}", result)));
+            return Err(FerriteError::Raft(format!("Delete failed: {result}")));
         }
 
         Ok(())
@@ -238,10 +239,7 @@ impl FerriteClient {
             .await?;
 
         if result.get("error").is_some() {
-            return Err(FerriteError::Raft(format!(
-                "Add learner failed: {}",
-                result
-            )));
+            return Err(FerriteError::Raft(format!("Add learner failed: {result}")));
         }
 
         // Add the new node to our list
@@ -260,8 +258,7 @@ impl FerriteClient {
 
         if result.get("error").is_some() {
             return Err(FerriteError::Raft(format!(
-                "Change membership failed: {}",
-                result
+                "Change membership failed: {result}"
             )));
         }
 

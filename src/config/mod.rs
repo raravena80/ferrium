@@ -59,7 +59,7 @@ pub struct KvSnapshot {
 
 /// Complete Ferrite configuration structure
 #[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FerriteConfig {
     pub node: NodeConfig,
     pub network: NetworkConfig,
@@ -317,20 +317,6 @@ pub enum AuthMethod {
     Jwt,
 }
 
-impl Default for FerriteConfig {
-    fn default() -> Self {
-        Self {
-            node: NodeConfig::default(),
-            network: NetworkConfig::default(),
-            storage: StorageConfig::default(),
-            raft: RaftConfig::default(),
-            logging: LoggingConfig::default(),
-            cluster: ClusterConfig::default(),
-            security: SecurityConfig::default(),
-        }
-    }
-}
-
 impl Default for NodeConfig {
     fn default() -> Self {
         Self {
@@ -478,7 +464,7 @@ impl Default for SecurityConfig {
 impl FerriteConfig {
     /// Load configuration from file
     pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path).map_err(|e| ConfigError::Io(e))?;
+        let content = std::fs::read_to_string(path).map_err(ConfigError::Io)?;
 
         let config: Self =
             toml::from_str(&content).map_err(|e| ConfigError::Parse(e.to_string()))?;
@@ -492,7 +478,7 @@ impl FerriteConfig {
         let content =
             toml::to_string_pretty(self).map_err(|e| ConfigError::Serialize(e.to_string()))?;
 
-        std::fs::write(path, content).map_err(|e| ConfigError::Io(e))?;
+        std::fs::write(path, content).map_err(ConfigError::Io)?;
 
         Ok(())
     }

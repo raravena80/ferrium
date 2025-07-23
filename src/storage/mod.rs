@@ -6,16 +6,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use openraft::{
-    storage::{
-        Adaptor, LogState, RaftLogReader, RaftLogStorage, RaftSnapshotBuilder, RaftStorage,
-        Snapshot,
-    },
-    CommittedLeaderId, Entry, EntryPayload, LeaderId, LogId, OptionalSend, SnapshotMeta,
-    StorageError, StorageIOError, StoredMembership, Vote,
+    storage::{Adaptor, LogState, RaftLogReader, RaftSnapshotBuilder, RaftStorage, Snapshot},
+    Entry, EntryPayload, LogId, OptionalSend, SnapshotMeta, StorageError, StorageIOError,
+    StoredMembership, Vote,
 };
 use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, Direction, Options, DB};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+
 use tracing::info;
 
 use crate::config::{KvRequest, KvResponse, KvSnapshot, Node, NodeId, TypeConfig};
@@ -96,6 +93,7 @@ impl FerriiteStorage {
         Ok(())
     }
 
+    #[allow(clippy::result_large_err)]
     fn get_last_purged_(&self) -> Result<Option<LogId<NodeId>>, StorageError<NodeId>> {
         Ok(self
             .db
@@ -104,6 +102,7 @@ impl FerriiteStorage {
             .and_then(|v| serde_json::from_slice(&v).ok()))
     }
 
+    #[allow(clippy::result_large_err)]
     fn set_last_purged_(&self, log_id: LogId<NodeId>) -> Result<(), StorageError<NodeId>> {
         self.db
             .put_cf(

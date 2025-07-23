@@ -71,6 +71,10 @@ jobs:
             "BSD-3-Clause",
             "ISC",
             "Unicode-DFS-2016",
+            "Zlib",
+            "(MIT OR Apache-2.0) AND Unicode-3.0",
+            "Unicode-3.0",
+            "MPL-2.0"
         ]
         EOF
         fi

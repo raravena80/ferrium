@@ -79,7 +79,7 @@ async fn main() -> std::io::Result<()> {
     let config = load_configuration(&args).map_err(|e| {
         std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            format!("Configuration error: {}", e),
+            format!("Configuration error: {e}"),
         )
     })?;
 
@@ -125,10 +125,9 @@ async fn main() -> std::io::Result<()> {
     }
 
     // Initialize storage with configuration
-    let (log_store, state_machine_store) =
-        new_storage(&config.node.data_dir).await.map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::Other, format!("Storage error: {}", e))
-        })?;
+    let (log_store, state_machine_store) = new_storage(&config.node.data_dir)
+        .await
+        .map_err(|e| std::io::Error::other(format!("Storage error: {e}")))?;
 
     // Initialize network
     let network_factory = HttpNetworkFactory::new();
@@ -144,9 +143,7 @@ async fn main() -> std::io::Result<()> {
             state_machine_store,
         )
         .await
-        .map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::Other, format!("Raft error: {}", e))
-        })?,
+        .map_err(|e| std::io::Error::other(format!("Raft error: {e}")))?,
     );
 
     // Create management API
@@ -172,7 +169,7 @@ async fn main() -> std::io::Result<()> {
             .add_service(RaftServiceServer::new(raft_service))
             .serve(grpc_addr)
             .await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+            .map_err(std::io::Error::other)
     });
 
     // Start auto-join process in background if enabled
@@ -263,7 +260,7 @@ async fn main() -> std::io::Result<()> {
                 }
                 Err(e) => {
                     tracing::error!("❌ gRPC server task error: {:?}", e);
-                    Err(std::io::Error::new(std::io::ErrorKind::Other, e))
+                    Err(std::io::Error::other(e))
                 }
             }
         }
@@ -289,13 +286,13 @@ fn load_configuration(args: &Args) -> Result<FerriteConfig, ConfigError> {
     if let Some(ref http_addr) = args.http_addr {
         config.node.http_addr = http_addr
             .parse()
-            .map_err(|e| ConfigError::Validation(format!("Invalid HTTP address: {}", e)))?;
+            .map_err(|e| ConfigError::Validation(format!("Invalid HTTP address: {e}")))?;
     }
 
     if let Some(ref grpc_addr) = args.grpc_addr {
         config.node.grpc_addr = grpc_addr
             .parse()
-            .map_err(|e| ConfigError::Validation(format!("Invalid gRPC address: {}", e)))?;
+            .map_err(|e| ConfigError::Validation(format!("Invalid gRPC address: {e}")))?;
     }
 
     if let Some(ref data_dir) = args.data_dir {
@@ -322,12 +319,12 @@ fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
         .map_err(|e| {
             std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
-                format!("Invalid log level: {}", e),
+                format!("Invalid log level: {e}"),
             )
         })?;
 
     let env_filter = EnvFilter::from_default_env()
-        .add_directive(format!("ferrite={}", level).parse().unwrap())
+        .add_directive(format!("ferrite={level}").parse().unwrap())
         .add_directive(
             format!(
                 "openraft={}",
@@ -364,12 +361,9 @@ fn setup_logging(config: &FerriteConfig) -> std::io::Result<()> {
 fn generate_default_config(path: PathBuf) -> std::io::Result<()> {
     let config = FerriteConfig::default();
 
-    config.to_file(&path).map_err(|e| {
-        std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Failed to write config: {}", e),
-        )
-    })?;
+    config
+        .to_file(&path)
+        .map_err(|e| std::io::Error::other(format!("Failed to write config: {e}")))?;
 
     println!(
         "✅ Generated default configuration file: {}",
@@ -400,6 +394,7 @@ fn list_config_paths() -> std::io::Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn parse_peer(peer: &str) -> Result<(NodeId, String), Box<dyn std::error::Error>> {
     let parts: Vec<&str> = peer.split('=').collect();
     if parts.len() != 2 {
@@ -412,8 +407,9 @@ fn parse_peer(peer: &str) -> Result<(NodeId, String), Box<dyn std::error::Error>
     Ok((id, addr))
 }
 
+#[allow(dead_code)]
 async fn health_check(addr: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let url = format!("http://{}/health", addr);
+    let url = format!("http://{addr}/health");
     let client = reqwest::Client::new();
     let response = client.get(&url).send().await?;
 

@@ -111,12 +111,12 @@ fn test_url_construction_logic() {
 
     for (addr, uri, expected) in test_cases {
         let url = if addr.starts_with("http://") || addr.starts_with("https://") {
-            format!("{}/{}", addr, uri)
+            format!("{addr}/{uri}")
         } else {
-            format!("http://{}/{}", addr, uri)
+            format!("http://{addr}/{uri}")
         };
 
-        assert_eq!(url, expected, "Failed for addr: {}, uri: {}", addr, uri);
+        assert_eq!(url, expected, "Failed for addr: {addr}, uri: {uri}");
     }
 }
 

@@ -7,9 +7,6 @@ use crate::config::{NodeId, TypeConfig};
 use crate::grpc::{
     // Import the oneof variants
     append_entries_response::Result as AppendEntriesResult,
-    AppendEntriesConflict,
-    AppendEntriesHigherVote,
-    AppendEntriesPartialSuccess,
     AppendEntriesRequest as GrpcAppendEntriesRequest,
     AppendEntriesResponse as GrpcAppendEntriesResponse,
     AppendEntriesSuccess,
@@ -41,7 +38,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_append_entries(grpc_req) {
             Ok(req) => req,
-            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {}", e))),
+            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {e}"))),
         };
 
         // Call openraft
@@ -50,7 +47,7 @@ impl RaftServiceTrait for RaftServiceImpl {
                 let grpc_resp = convert_openraft_to_grpc_append_entries_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
             }
-            Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
+            Err(e) => Err(Status::internal(format!("Raft error: {e}"))),
         }
     }
 
@@ -63,7 +60,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_vote(grpc_req) {
             Ok(req) => req,
-            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {}", e))),
+            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {e}"))),
         };
 
         // Call openraft
@@ -72,7 +69,7 @@ impl RaftServiceTrait for RaftServiceImpl {
                 let grpc_resp = convert_openraft_to_grpc_vote_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
             }
-            Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
+            Err(e) => Err(Status::internal(format!("Raft error: {e}"))),
         }
     }
 
@@ -85,7 +82,7 @@ impl RaftServiceTrait for RaftServiceImpl {
         // Convert gRPC request to openraft request
         let openraft_req = match convert_grpc_to_openraft_install_snapshot(grpc_req) {
             Ok(req) => req,
-            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {}", e))),
+            Err(e) => return Err(Status::invalid_argument(format!("Invalid request: {e}"))),
         };
 
         // Call openraft
@@ -94,7 +91,7 @@ impl RaftServiceTrait for RaftServiceImpl {
                 let grpc_resp = convert_openraft_to_grpc_install_snapshot_response(openraft_resp);
                 Ok(Response::new(grpc_resp))
             }
-            Err(e) => Err(Status::internal(format!("Raft error: {}", e))),
+            Err(e) => Err(Status::internal(format!("Raft error: {e}"))),
         }
     }
 }

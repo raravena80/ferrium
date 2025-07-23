@@ -1,15 +1,16 @@
 use std::sync::Arc;
 
-use tonic::{Request, Response, Status};
-
-use crate::config::Node;
-use crate::grpc::{
-    AddLearnerRequest, AddLearnerResponse, ChangeMembershipRequest, ChangeMembershipResponse,
-    HealthRequest, HealthResponse, InitializeRequest, InitializeResponse, LeaderRequest,
-    LeaderResponse, ManagementServiceTrait, MembershipConfig, MetricsRequest, MetricsResponse,
-    NodeInfo, ReplicationStatus,
+use crate::{
+    grpc::{
+        AddLearnerRequest, AddLearnerResponse, ChangeMembershipRequest, ChangeMembershipResponse,
+        MetricsRequest, MetricsResponse, InitializeRequest, InitializeResponse,
+        HealthRequest, HealthResponse, LeaderRequest, LeaderResponse,
+        ManagementServiceTrait, MembershipConfig, NodeInfo,
+    },
+    network::management::ManagementApi,
+    config::Node,
 };
-use crate::network::management::ManagementApi;
+use tonic::{Request, Response, Status};
 
 pub struct ManagementServiceImpl {
     management: Arc<ManagementApi>,

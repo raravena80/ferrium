@@ -1,5 +1,7 @@
 use super::*;
-use openraft::{EntryPayload, Membership};
+use openraft::{EntryPayload, Membership, CommittedLeaderId};
+use openraft::storage::RaftLogStorage;
+use std::collections::BTreeSet;
 use tempfile::TempDir;
 
 /// Helper function to create a temporary storage instance
@@ -126,8 +128,8 @@ async fn test_log_entries_range_queries() {
                 i,
                 1,
                 KvRequest::Set {
-                    key: format!("key{}", i),
-                    value: format!("value{}", i),
+                    key: format!("key{i}"),
+                    value: format!("value{i}"),
                 },
             )
         })
@@ -174,8 +176,8 @@ async fn test_log_deletion() {
                 i,
                 1,
                 KvRequest::Set {
-                    key: format!("key{}", i),
-                    value: format!("value{}", i),
+                    key: format!("key{i}"),
+                    value: format!("value{i}"),
                 },
             )
         })
@@ -534,8 +536,8 @@ async fn test_large_dataset_performance() {
                 i,
                 1,
                 KvRequest::Set {
-                    key: format!("performance_key_{}", i),
-                    value: format!("performance_value_{}", i),
+                    key: format!("performance_key_{i}"),
+                    value: format!("performance_value_{i}"),
                 },
             )
         })
@@ -567,8 +569,8 @@ async fn test_large_dataset_performance() {
 
     // Log performance info (not assertions, just for visibility)
     println!("Large dataset performance:");
-    println!("  Append 1000 entries: {:?}", append_time);
-    println!("  Apply 1000 entries: {:?}", apply_time);
+    println!("  Append 1000 entries: {append_time:?}");
+    println!("  Apply 1000 entries: {apply_time:?}");
     println!(
         "  Final state machine size: {}",
         storage.state_machine.data.len()
@@ -577,13 +579,11 @@ async fn test_large_dataset_performance() {
     // Basic performance checks (generous limits)
     assert!(
         append_time < std::time::Duration::from_secs(5),
-        "Append took too long: {:?}",
-        append_time
+        "Append took too long: {append_time:?}"
     );
     assert!(
         apply_time < std::time::Duration::from_secs(5),
-        "Apply took too long: {:?}",
-        apply_time
+        "Apply took too long: {apply_time:?}"
     );
 }
 
@@ -597,8 +597,7 @@ async fn test_binary_key_conversion_helpers() {
         let recovered = bin_to_id(&binary);
         assert_eq!(
             value, recovered,
-            "Failed to convert value {} correctly",
-            value
+            "Failed to convert value {value} correctly"
         );
     }
 

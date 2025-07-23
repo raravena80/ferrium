@@ -30,6 +30,12 @@ pub struct HttpNetwork {
     target_addr: String,
 }
 
+impl Default for HttpNetwork {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HttpNetwork {
     pub fn new() -> Self {
         let client = Client::builder()
@@ -104,7 +110,7 @@ impl HttpNetwork {
 
             return Err(RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("RPC failed with status {}: {}", status, body),
+                format!("RPC failed with status {status}: {body}"),
             ))));
         }
 
@@ -112,7 +118,7 @@ impl HttpNetwork {
             error!("Failed to parse response from {}: {}", url, e);
             RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("Failed to parse response: {}", e),
+                format!("Failed to parse response: {e}"),
             )))
         })?;
 
@@ -176,7 +182,7 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
 
             return Err(RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("RPC failed with status {}: {}", status, body),
+                format!("RPC failed with status {status}: {body}"),
             ))));
         }
 
@@ -184,7 +190,7 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
             error!("Failed to parse response from {}: {}", url, e);
             RPCError::Network(NetworkError::new(&std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                format!("Failed to parse response: {}", e),
+                format!("Failed to parse response: {e}"),
             )))
         })?;
 
@@ -203,6 +209,12 @@ impl RaftNetwork<TypeConfig> for HttpNetwork {
 /// Factory for creating network instances
 pub struct HttpNetworkFactory {
     // We don't need to store anything here anymore since each network instance is self-contained
+}
+
+impl Default for HttpNetworkFactory {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl HttpNetworkFactory {
@@ -432,7 +444,7 @@ pub mod management {
                     tracing::info!("Found leader: Node {} at {}", leader_id, leader_url);
 
                     // Request to join as learner
-                    let join_result = self.request_join_as_learner(&leader_url, &config).await;
+                    let join_result = self.request_join_as_learner(&leader_url, config).await;
 
                     match join_result {
                         Ok(()) => {
@@ -476,7 +488,7 @@ pub mod management {
                 "api_addr": format!("http://{}", config.node.http_addr)
             });
 
-            let url = format!("{}/add-learner", leader_url);
+            let url = format!("{leader_url}/add-learner");
 
             let start = std::time::Instant::now();
             while start.elapsed() < config.cluster.auto_join_timeout {

@@ -116,6 +116,7 @@ jobs:
         key: ${{ matrix.os }}-${{ matrix.profile }}
 
     - name: Build project
+      shell: bash
       run: |
         if [ "${{ matrix.profile }}" = "release" ]; then
           cargo build --release

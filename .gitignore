@@ -62,8 +62,8 @@ core.*
 # Benchmarking
 /target/criterion/
 
-# Lock files (if any)
-*.lock
+# Lock files (if any) - except Cargo.lock which should be committed for applications
+# *.lock  # Commented out so Cargo.lock gets committed
 
 # Binary distributions
 ferrite-server

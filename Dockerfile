@@ -1,17 +1,24 @@
 # Build stage
-FROM rust:1.75-slim as builder
+FROM rust:1.82-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     ca-certificates \
+    protobuf-compiler \
+    libclang-dev \
+    clang \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/ferrite
 
 # Copy dependency manifests
 COPY Cargo.toml Cargo.lock ./
+
+# Copy build configuration and proto files
+COPY build.rs ./
+COPY proto ./proto
 
 # Copy source code
 COPY src ./src
@@ -26,6 +33,7 @@ FROM debian:bookworm-slim
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user

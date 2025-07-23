@@ -26,11 +26,11 @@ tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 actix-web = "4.0"
-actix-cors = "0.6"
+actix-cors = "0.7"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
-rocksdb = "0.21"
+rocksdb = "0.23"
 anyhow = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "chrono", "json"] }
 clap = { version = "4.0", features = ["derive"] }
@@ -44,7 +44,7 @@ tokio-stream = "0.1"
 tower = "0.5"
 
 # Configuration
-toml = "0.8"
+toml = "0.9"
 serde_with = "3.0"
 dirs = "6.0"
 

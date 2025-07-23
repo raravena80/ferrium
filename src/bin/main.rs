@@ -18,6 +18,7 @@ use ferrium::{
     config::{create_raft_config, ConfigError, FerriumConfig, NodeId},
     network::{api, management::ManagementApi, HttpNetworkFactory},
     storage::new_storage,
+    tls::{validate_tls_config, ClientTlsConfig, TlsConfig},
 };
 
 #[derive(Parser)]
@@ -64,6 +65,11 @@ pub struct Args {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Install default CryptoProvider for rustls (required in newer versions)
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .map_err(|_| std::io::Error::other("Failed to install default crypto provider"))?;
+
     let args = Args::parse();
 
     // Handle utility commands first
@@ -93,10 +99,28 @@ async fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
+    // Validate TLS configuration if enabled
+    if let Err(e) = validate_tls_config(&config.security) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("TLS configuration error: {e}"),
+        ));
+    }
+
     // Initialize logging based on configuration
     setup_logging(&config)?;
 
     tracing::info!("🚀 Starting Ferrium node {}", config.node.id);
+
+    // Log TLS status
+    if config.security.enable_tls {
+        tracing::info!("🔒 TLS enabled");
+        if config.security.enable_mtls {
+            tracing::info!("🔐 Mutual TLS (mTLS) enabled");
+        }
+    } else {
+        tracing::warn!("⚠️  TLS disabled - communications are unencrypted");
+    }
     tracing::info!(
         "📁 Configuration loaded from: {}",
         args.config
@@ -104,8 +128,18 @@ async fn main() -> std::io::Result<()> {
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "defaults".to_string())
     );
-    tracing::info!("🌐 HTTP API: http://{}", config.node.http_addr);
-    tracing::info!("🔌 gRPC API: http://{}", config.node.grpc_addr);
+    let http_protocol = if config.security.enable_tls {
+        "https"
+    } else {
+        "http"
+    };
+    let grpc_protocol = if config.security.enable_tls {
+        "https"
+    } else {
+        "http"
+    };
+    tracing::info!("🌐 HTTP API: {}://{}", http_protocol, config.node.http_addr);
+    tracing::info!("🔌 gRPC API: {}://{}", grpc_protocol, config.node.grpc_addr);
     tracing::info!("💾 Data directory: {}", config.node.data_dir.display());
     tracing::info!("🏷️  Cluster: {}", config.cluster.name);
 
@@ -129,8 +163,16 @@ async fn main() -> std::io::Result<()> {
         .await
         .map_err(|e| std::io::Error::other(format!("Storage error: {e}")))?;
 
-    // Initialize network
-    let network_factory = HttpNetworkFactory::new();
+    // Create TLS configurations
+    let server_tls_config = TlsConfig::from_security_config(&config.security)
+        .map_err(|e| std::io::Error::other(format!("TLS configuration error: {e}")))?;
+
+    let client_tls_config = ClientTlsConfig::from_security_config(&config.security)
+        .map_err(|e| std::io::Error::other(format!("Client TLS configuration error: {e}")))?
+        .map(std::sync::Arc::new);
+
+    // Initialize network factory with TLS support
+    let network_factory = HttpNetworkFactory::with_tls_config(client_tls_config.clone());
 
     // Create Raft instance with configuration
     let raft_config = Arc::new(create_raft_config(&config.raft));
@@ -160,10 +202,34 @@ async fn main() -> std::io::Result<()> {
 
     // Start gRPC server in a separate task
     let grpc_addr = config.node.grpc_addr;
+    let grpc_tls_config = server_tls_config.clone();
     let grpc_server = tokio::spawn(async move {
-        tracing::info!("🔌 Starting gRPC server on {}", grpc_addr);
+        let protocol = if grpc_tls_config.is_some() {
+            "https"
+        } else {
+            "http"
+        };
+        tracing::info!("🔌 Starting gRPC server on {}://{}", protocol, grpc_addr);
 
-        Server::builder()
+        let mut server_builder = Server::builder();
+
+        // Configure TLS if enabled
+        if let Some(tls_config) = grpc_tls_config {
+            match tls_config.create_tonic_server_config() {
+                Ok(tonic_tls_config) => {
+                    server_builder = server_builder.tls_config(tonic_tls_config).map_err(|e| {
+                        std::io::Error::other(format!("Failed to configure gRPC TLS: {e}"))
+                    })?;
+                    tracing::info!("🔒 gRPC server TLS configured");
+                }
+                Err(e) => {
+                    tracing::error!("❌ Failed to configure gRPC TLS: {}", e);
+                    return Err(std::io::Error::other(format!("gRPC TLS error: {e}")));
+                }
+            }
+        }
+
+        server_builder
             .add_service(KvServiceServer::new(kv_service))
             .add_service(ManagementServiceServer::new(management_service))
             .add_service(RaftServiceServer::new(raft_service))
@@ -176,12 +242,25 @@ async fn main() -> std::io::Result<()> {
     if config.cluster.enable_auto_join && !config.cluster.get_all_peers().is_empty() {
         let auto_join_mgmt = management.clone();
         let auto_join_config = config.clone();
+        let auto_join_tls_config = client_tls_config.clone(); // Capture TLS config
 
         tokio::spawn(async move {
             // Wait for servers to be fully ready
             tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
-            match auto_join_mgmt.auto_join_cluster(&auto_join_config).await {
+            tracing::info!(
+                "🔄 Starting auto-join process for Node {}",
+                auto_join_config.node.id
+            );
+            tracing::info!(
+                "🔒 TLS enabled for auto-join: {}",
+                auto_join_tls_config.is_some()
+            );
+
+            match auto_join_mgmt
+                .auto_join_cluster(&auto_join_config, auto_join_tls_config.as_deref())
+                .await
+            {
                 Ok(joined) => {
                     if joined {
                         tracing::info!("🤝 Successfully auto-joined cluster");
@@ -192,7 +271,11 @@ async fn main() -> std::io::Result<()> {
                     }
                 }
                 Err(e) => {
-                    tracing::warn!("❌ Auto-join failed: {}", e);
+                    tracing::warn!(
+                        "❌ Auto-join failed for Node {}: {}",
+                        auto_join_config.node.id,
+                        e
+                    );
                 }
             }
         });
@@ -201,10 +284,16 @@ async fn main() -> std::io::Result<()> {
     // Start HTTP server
     let http_addr = config.node.http_addr;
     let app_config = config.clone();
+    let http_tls_config = server_tls_config.clone();
     let http_server = async move {
-        tracing::info!("🌐 Starting HTTP server on {}", http_addr);
+        let protocol = if http_tls_config.is_some() {
+            "https"
+        } else {
+            "http"
+        };
+        tracing::info!("🌐 Starting HTTP server on {}://{}", protocol, http_addr);
 
-        HttpServer::new(move || {
+        let server = HttpServer::new(move || {
             let cors = Cors::default()
                 .allow_any_origin()
                 .allow_any_method()
@@ -236,10 +325,29 @@ async fn main() -> std::io::Result<()> {
                     "/raft/install-snapshot",
                     web::post().to(api::install_snapshot),
                 )
-        })
-        .bind(http_addr)?
-        .run()
-        .await
+        });
+
+        // Configure TLS if enabled
+        if let Some(tls_config) = http_tls_config {
+            match tls_config.create_rustls_server_config() {
+                Ok(rustls_config) => {
+                    tracing::info!("🔒 HTTP server TLS configured");
+                    server
+                        .bind_rustls_0_23(http_addr, (*rustls_config).clone())
+                        .map_err(|e| {
+                            std::io::Error::other(format!("Failed to bind HTTPS server: {e}"))
+                        })?
+                        .run()
+                        .await
+                }
+                Err(e) => {
+                    tracing::error!("❌ Failed to configure HTTP TLS: {}", e);
+                    Err(std::io::Error::other(format!("HTTP TLS error: {e}")))
+                }
+            }
+        } else {
+            server.bind(http_addr)?.run().await
+        }
     };
 
     // Run both servers concurrently
@@ -310,6 +418,7 @@ fn load_configuration(args: &Args) -> Result<FerriumConfig, ConfigError> {
 
 /// Setup logging based on configuration
 fn setup_logging(config: &FerriumConfig) -> std::io::Result<()> {
+    use std::fs::OpenOptions;
     use tracing_subscriber::fmt::time::ChronoUtc;
 
     let level = config
@@ -338,20 +447,57 @@ fn setup_logging(config: &FerriumConfig) -> std::io::Result<()> {
             .unwrap(),
         );
 
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter(env_filter)
-        .with_timer(ChronoUtc::rfc_3339())
-        .with_span_events(FmtSpan::CLOSE)
-        .with_target(config.logging.structured);
-
-    match (&config.logging.format, config.logging.enable_colors) {
-        (ferrium::config::LogFormat::Json, _) => subscriber.json().init(),
-        (ferrium::config::LogFormat::Compact, true) => subscriber.compact().with_ansi(true).init(),
-        (ferrium::config::LogFormat::Compact, false) => {
-            subscriber.compact().with_ansi(false).init()
+    // Configure the subscriber based on whether file logging is enabled
+    if let Some(file_path) = &config.logging.file_path {
+        // Ensure the parent directory exists
+        if let Some(parent) = file_path.parent() {
+            std::fs::create_dir_all(parent)?;
         }
-        (ferrium::config::LogFormat::Pretty, true) => subscriber.pretty().with_ansi(true).init(),
-        (ferrium::config::LogFormat::Pretty, false) => subscriber.pretty().with_ansi(false).init(),
+
+        // Create or open the log file
+        let file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(file_path)?;
+
+        let subscriber = tracing_subscriber::fmt()
+            .with_env_filter(env_filter)
+            .with_timer(ChronoUtc::rfc_3339())
+            .with_span_events(FmtSpan::CLOSE)
+            .with_target(config.logging.structured)
+            .with_writer(file);
+
+        // Apply format settings for file output
+        match (&config.logging.format, config.logging.enable_colors) {
+            (ferrium::config::LogFormat::Json, _) => subscriber.json().init(),
+            (ferrium::config::LogFormat::Compact, _) => {
+                subscriber.compact().with_ansi(false).init()
+            } // No colors in file
+            (ferrium::config::LogFormat::Pretty, _) => subscriber.pretty().with_ansi(false).init(), // No colors in file
+        }
+    } else {
+        // Console-only logging (original behavior)
+        let subscriber = tracing_subscriber::fmt()
+            .with_env_filter(env_filter)
+            .with_timer(ChronoUtc::rfc_3339())
+            .with_span_events(FmtSpan::CLOSE)
+            .with_target(config.logging.structured);
+
+        match (&config.logging.format, config.logging.enable_colors) {
+            (ferrium::config::LogFormat::Json, _) => subscriber.json().init(),
+            (ferrium::config::LogFormat::Compact, true) => {
+                subscriber.compact().with_ansi(true).init()
+            }
+            (ferrium::config::LogFormat::Compact, false) => {
+                subscriber.compact().with_ansi(false).init()
+            }
+            (ferrium::config::LogFormat::Pretty, true) => {
+                subscriber.pretty().with_ansi(true).init()
+            }
+            (ferrium::config::LogFormat::Pretty, false) => {
+                subscriber.pretty().with_ansi(false).init()
+            }
+        }
     }
 
     Ok(())

@@ -6,6 +6,9 @@ set -e
 SKIP_INTERACTIVE=false
 AUTO_CLEANUP_TIMEOUT=""
 KEEP_RUNNING=false
+NO_CLEANUP=false
+ENABLE_TLS=false
+ENABLE_MTLS=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -29,6 +32,20 @@ while [[ $# -gt 0 ]]; do
             SKIP_INTERACTIVE=true
             shift
             ;;
+        --no-cleanup)
+            NO_CLEANUP=true
+            SKIP_INTERACTIVE=true
+            shift
+            ;;
+        --tls)
+            ENABLE_TLS=true
+            shift
+            ;;
+        --mtls)
+            ENABLE_TLS=true
+            ENABLE_MTLS=true
+            shift
+            ;;
         --help)
             echo "Ferrium Comprehensive Cluster Test"
             echo ""
@@ -38,6 +55,9 @@ while [[ $# -gt 0 ]]; do
             echo "  --ci, --non-interactive    Run in CI mode (no user prompts)"
             echo "  --auto-cleanup[=SECONDS]   Auto cleanup after SECONDS (default: 10)"
             echo "  --keep-running            Keep cluster running and exit (for manual testing)"
+            echo "  --no-cleanup              Start cluster and exit without any cleanup (for debugging)"
+            echo "  --tls                     Enable TLS for cluster communication"
+            echo "  --mtls                    Enable mutual TLS (mTLS) for cluster communication"
             echo "  --help                    Show this help message"
             echo ""
             echo "Environment Variables:"
@@ -49,6 +69,10 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --ci                   # CI mode (immediate cleanup)"
             echo "  $0 --auto-cleanup=30      # Auto cleanup after 30 seconds"
             echo "  $0 --keep-running         # Keep cluster for manual testing"
+            echo "  $0 --tls                  # Test with TLS encryption"
+            echo "  $0 --mtls                 # Test with mutual TLS authentication"
+            echo "  $0 --tls --keep-running   # TLS cluster for manual testing"
+            echo "  $0 --tls --no-cleanup     # TLS cluster for debugging (no cleanup on exit)"
             exit 0
             ;;
         *)
@@ -85,6 +109,7 @@ TEST_DIR="./test-cluster-automated"
 CONFIG_DIR="$TEST_DIR/configs"
 DATA_DIR="$TEST_DIR/data"
 LOG_DIR="$TEST_DIR/logs"
+CERTS_DIR="$TEST_DIR/certs"
 BINARY="./target/release/ferrium-server"
 
 # Node configurations
@@ -136,14 +161,44 @@ cleanup() {
     echo_success "Cleanup completed"
 }
 
-# Trap to cleanup on script exit
-trap cleanup EXIT
+# Trap to cleanup on script exit (unless --no-cleanup is specified)
+if [[ "$NO_CLEANUP" != "true" ]]; then
+    trap cleanup EXIT
+fi
 
 check_binary() {
     if [ ! -f "$BINARY" ]; then
         echo_error "Binary $BINARY not found. Please run: cargo build --release"
         exit 1
     fi
+}
+
+check_dependencies() {
+    echo_info "Checking dependencies..."
+    
+    # Check for OpenSSL if TLS is enabled
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        if ! command -v openssl &> /dev/null; then
+            echo_error "OpenSSL is required for TLS mode but not found"
+            echo_info "Please install OpenSSL:"
+            echo_info "  macOS: brew install openssl"
+            echo_info "  Ubuntu/Debian: sudo apt-get install openssl"
+            echo_info "  RHEL/CentOS: sudo yum install openssl"
+            exit 1
+        fi
+        echo_success "OpenSSL found: $(openssl version)"
+    fi
+    
+    # Check for other required tools
+    local required_tools=("curl" "jq" "nc")
+    for tool in "${required_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            echo_error "$tool is required but not found"
+            exit 1
+        fi
+    done
+    
+    echo_success "All dependencies satisfied"
 }
 
 setup_test_environment() {
@@ -158,8 +213,123 @@ setup_test_environment() {
 
     # Create directories
     mkdir -p "$CONFIG_DIR" "$DATA_DIR" "$LOG_DIR"
+    
+    # Create certs directory if TLS is enabled
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        mkdir -p "$CERTS_DIR"
+        echo_info "TLS mode enabled - certificates directory created"
+    fi
 
     echo_success "Test environment ready (clean slate)"
+}
+
+generate_ca_certificate() {
+    echo_info "Generating Certificate Authority (CA)..."
+    
+    local ca_key="$CERTS_DIR/ca-key.pem"
+    local ca_cert="$CERTS_DIR/ca-cert.pem"
+    
+    # Generate CA private key
+    if ! openssl genrsa -out "$ca_key" 2048 2>/dev/null; then
+        echo_error "Failed to generate CA private key"
+        return 1
+    fi
+    
+    # Generate CA certificate
+    if ! openssl req -new -x509 -key "$ca_key" -out "$ca_cert" -days 365 \
+        -subj "/CN=Ferrium Test CA/O=Ferrium Cluster Test" 2>/dev/null; then
+        echo_error "Failed to generate CA certificate"
+        return 1
+    fi
+    
+    echo_success "CA certificate generated"
+}
+
+generate_node_certificate() {
+    local node_id=$1
+    local http_port=$2
+    local grpc_port=$3
+    
+    echo_info "Generating certificate for Node $node_id..."
+    
+    local ca_key="$CERTS_DIR/ca-key.pem"
+    local ca_cert="$CERTS_DIR/ca-cert.pem"
+    local node_key="$CERTS_DIR/node${node_id}-key.pem"
+    local node_cert="$CERTS_DIR/node${node_id}-cert.pem"
+    local node_csr="$CERTS_DIR/node${node_id}.csr"
+    
+    # Generate node private key
+    if ! openssl genrsa -out "$node_key" 2048 2>/dev/null; then
+        echo_error "Failed to generate private key for Node $node_id"
+        return 1
+    fi
+    
+    # Generate certificate signing request
+    local subject="/CN=ferrium-node-${node_id}/O=Ferrium Cluster Test"
+    if ! openssl req -new -key "$node_key" -out "$node_csr" \
+        -subj "$subject" 2>/dev/null; then
+        echo_error "Failed to generate CSR for Node $node_id"
+        return 1
+    fi
+    
+    # Create certificate extensions for SAN (Subject Alternative Names)
+    local ext_file="$CERTS_DIR/node${node_id}-ext.cnf"
+    cat > "$ext_file" << EOF
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+IP.1 = 127.0.0.1
+DNS.2 = ferrium-node-${node_id}
+IP.2 = 127.0.0.1
+EOF
+    
+    # Sign the certificate
+    if ! openssl x509 -req -in "$node_csr" -CA "$ca_cert" -CAkey "$ca_key" \
+        -CAcreateserial -out "$node_cert" -days 365 \
+        -extensions v3_req -extfile "$ext_file" 2>/dev/null; then
+        echo_error "Failed to sign certificate for Node $node_id"
+        return 1
+    fi
+    
+    # Clean up temporary files
+    rm -f "$node_csr" "$ext_file"
+    
+    echo_success "Certificate generated for Node $node_id"
+}
+
+setup_tls_certificates() {
+    if [[ "$ENABLE_TLS" != "true" ]]; then
+        return 0
+    fi
+    
+    echo_feature "🔐 Setting up TLS certificates..."
+    
+    # Generate CA certificate
+    generate_ca_certificate
+    
+    # Generate node certificates
+    generate_node_certificate 1 $NODE1_HTTP $NODE1_GRPC
+    generate_node_certificate 2 $NODE2_HTTP $NODE2_GRPC
+    generate_node_certificate 3 $NODE3_HTTP $NODE3_GRPC
+    
+    # Show certificate information
+    echo_info "Certificate summary:"
+    echo "  CA Certificate: $CERTS_DIR/ca-cert.pem"
+    for i in 1 2 3; do
+        echo "  Node $i Certificate: $CERTS_DIR/node${i}-cert.pem"
+        echo "  Node $i Private Key: $CERTS_DIR/node${i}-key.pem"
+    done
+    
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        echo_success "🔐 mTLS certificates ready - mutual authentication enabled"
+    else
+        echo_success "🔐 TLS certificates ready - encryption enabled"
+    fi
 }
 
 create_node_config() {
@@ -167,6 +337,42 @@ create_node_config() {
     local http_port=$2
     local grpc_port=$3
     local config_file="$CONFIG_DIR/node${node_id}.toml"
+
+    # TLS configuration section
+    local tls_config=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        local cert_file="$CERTS_DIR/node${node_id}-cert.pem"
+        local key_file="$CERTS_DIR/node${node_id}-key.pem"
+        local ca_file="$CERTS_DIR/ca-cert.pem"
+        
+        # Convert relative paths to absolute paths for the config
+        cert_file=$(realpath "$cert_file")
+        key_file=$(realpath "$key_file")
+        ca_file=$(realpath "$ca_file")
+        
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            tls_config="enable_tls = true
+enable_mtls = true
+accept_invalid_certs = true
+cert_file = \"$cert_file\"
+key_file = \"$key_file\"
+ca_file = \"$ca_file\"
+auth_method = \"certificate\""
+        else
+            tls_config="enable_tls = true
+enable_mtls = false
+accept_invalid_certs = true
+cert_file = \"$cert_file\"
+key_file = \"$key_file\"
+ca_file = \"$ca_file\"
+auth_method = \"none\""
+        fi
+    else
+        tls_config="enable_tls = false
+enable_mtls = false
+accept_invalid_certs = false
+auth_method = \"none\""
+    fi
 
     cat > "$config_file" << EOF
 # Ferrium Node ${node_id} Test Configuration
@@ -256,16 +462,32 @@ method = "static"
 interval = 30000
 
 [security]
-enable_tls = false
-enable_mtls = false
-auth_method = "none"
+$tls_config
 EOF
 
-    echo_info "Created configuration for Node ${node_id}: $config_file"
+    local tls_status="Plain HTTP"
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            tls_status="mTLS (Mutual TLS)"
+        else
+            tls_status="TLS (Encrypted)"
+        fi
+    fi
+
+    echo_info "Created configuration for Node ${node_id}: $config_file ($tls_status)"
 }
 
 create_configurations() {
-    echo_feature "Creating TOML configuration files..."
+    local mode_desc="TOML configuration files"
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            mode_desc="mTLS-enabled TOML configuration files"
+        else
+            mode_desc="TLS-enabled TOML configuration files"
+        fi
+    fi
+    
+    echo_feature "Creating $mode_desc..."
 
     create_node_config 1 $NODE1_HTTP $NODE1_GRPC
     create_node_config 2 $NODE2_HTTP $NODE2_GRPC
@@ -307,13 +529,34 @@ start_cluster() {
     start_node 3
 
     echo_info "Waiting for nodes to initialize..."
-    sleep 6
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        sleep 15  # mTLS needs more time for certificate loading and TLS setup
+        echo_info "Extended wait for mTLS certificate initialization..."
+    else
+        sleep 6
+    fi
 
     echo_success "All nodes started"
 }
 
 check_health() {
-    echo_test "Testing node health endpoints..."
+    local test_desc="node health endpoints"
+    local protocol="http"
+    local curl_opts=""
+    
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+            test_desc="node health endpoints over mTLS"
+        else
+            curl_opts="-k"
+            test_desc="node health endpoints over TLS"
+        fi
+    fi
+
+    echo_test "Testing $test_desc..."
 
     local ports=($NODE1_HTTP $NODE2_HTTP $NODE3_HTTP)
     local grpc_ports=($NODE1_GRPC $NODE2_GRPC $NODE3_GRPC)
@@ -327,7 +570,7 @@ check_health() {
 
         # Test HTTP health endpoint
         local health_response
-        if health_response=$(curl -s "http://127.0.0.1:$http_port/health" 2>/dev/null); then
+        if health_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$http_port/health" 2>/dev/null); then
             if echo "$health_response" | jq -e '.status == "healthy"' > /dev/null 2>&1; then
                 echo_success "  HTTP health check passed"
             else
@@ -353,8 +596,21 @@ setup_cluster() {
 
     # Initialize cluster on Node 1 (becomes the leader)
     echo_info "Initializing cluster on Node 1 (it will become the leader)..."
+    
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts="-k"
+        fi
+    fi
+    
     local init_response
-    if init_response=$(curl -s -X POST "http://127.0.0.1:$NODE1_HTTP/init" 2>/dev/null); then
+    if init_response=$(curl -s $curl_opts -X POST "${protocol}://127.0.0.1:$NODE1_HTTP/init" 2>/dev/null); then
         echo_success "Node 1 initialized as cluster leader: $init_response"
     else
         echo_error "Failed to initialize Node 1 as leader"
@@ -368,47 +624,106 @@ setup_cluster() {
     echo_info "      3. Get auto-accepted (since they're in peer config)"
     echo_info "   ⏰ Waiting for auto-join to complete..."
 
-    # Wait longer for auto-join process to complete
-    sleep 12
+    # Wait longer for auto-join process to complete (extra time for mTLS)
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        sleep 25  # mTLS needs extra time for mutual authentication
+    else
+        sleep 12
+    fi
 
     # Check if nodes joined automatically by examining cluster metrics
     echo_test "Checking auto-join results..."
     local metrics_response
-    if metrics_response=$(curl -s "http://127.0.0.1:$NODE1_HTTP/metrics" 2>/dev/null); then
-        local membership_size
-        membership_size=$(echo "$metrics_response" | jq -r '.membership_config.membership.voters | length' 2>/dev/null || echo "0")
-
-        if [[ "$membership_size" -ge 2 ]]; then
-            echo_success "🎉 Auto-join appears successful! (membership size: $membership_size)"
-        else
-            echo_info "🔄 Auto-join in progress or needs manual promotion (current voters: $membership_size)"
-        fi
+    local membership_size=0
+    local max_retries
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        max_retries=4  # mTLS needs a bit more patience
     else
-        echo_warning "Could not check auto-join status from metrics"
+        max_retries=3
+    fi
+    local retry_count=0
+
+    while [[ $retry_count -lt $max_retries ]] && [[ $membership_size -lt 3 ]]; do
+        if [[ $retry_count -gt 0 ]]; then
+            echo_info "🔄 Waiting longer for auto-join to complete... (attempt $((retry_count + 1))/$max_retries)"
+            if [[ "$ENABLE_MTLS" == "true" ]]; then
+                sleep 15  # mTLS needs extra time for membership changes
+            else
+                sleep 8
+            fi
+        fi
+
+        if metrics_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$NODE1_HTTP/metrics" 2>/dev/null); then
+            membership_size=$(echo "$metrics_response" | jq -r '.membership_config.membership.configs[-1] | length' 2>/dev/null || echo "0")
+            echo_info "Current membership size: $membership_size"
+        else
+            echo_warning "Could not check auto-join status from metrics"
+        fi
+
+        retry_count=$((retry_count + 1))
+    done
+
+    if [[ "$membership_size" -ge 3 ]]; then
+        echo_success "🎉 Auto-join fully successful! All $membership_size nodes joined"
+    elif [[ "$membership_size" -ge 2 ]]; then
+        echo_success "🎊 Auto-join mostly successful! $membership_size nodes joined"
+    else
+        echo_info "🔄 Auto-join in progress or needs manual promotion (current voters: $membership_size)"
     fi
 
-    # Ensure all nodes are promoted to voting members (in case auto-join added them as learners only)
-    echo_info "🗳️  Ensuring all nodes are voting members..."
-    local membership_response
-    membership_response=$(curl -s -X POST -H "Content-Type: application/json" \
-        -d '[1,2,3]' \
-        "http://127.0.0.1:$NODE1_HTTP/change-membership" 2>/dev/null)
+    # Ensure all nodes are promoted to voting members (only if needed)
+    if [[ "$membership_size" -lt 3 ]]; then
+        echo_info "🗳️  Ensuring all nodes are voting members..."
+        local membership_response
+        membership_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
+            -d '[1,2,3]' \
+            "${protocol}://127.0.0.1:$NODE1_HTTP/change-membership" 2>/dev/null)
 
-    if echo "$membership_response" | grep -q "error"; then
-        echo_info "Membership promotion response: $membership_response"
-        echo_info "(This may be expected if nodes are already voting members)"
+        if echo "$membership_response" | grep -q "already undergoing a configuration change"; then
+            echo_info "⏳ Membership change already in progress - waiting for it to complete..."
+            sleep 8
+            # Recheck membership after waiting
+            if metrics_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$NODE1_HTTP/metrics" 2>/dev/null); then
+                membership_size=$(echo "$metrics_response" | jq -r '.membership_config.membership.configs[-1] | length' 2>/dev/null || echo "0")
+                echo_info "Membership size after waiting: $membership_size"
+                if [[ "$membership_size" -ge 3 ]]; then
+                    echo_success "🎉 Membership change completed successfully - all $membership_size nodes active!"
+                fi
+            fi
+        elif echo "$membership_response" | grep -q "error"; then
+            echo_info "Membership promotion response: $membership_response"
+            echo_info "(This may be expected if nodes are already voting members)"
+        else
+            echo_success "All nodes promoted to voting members: $membership_response"
+        fi
     else
-        echo_success "All nodes promoted to voting members: $membership_response"
+        echo_success "🎉 All 3 nodes are already voting members - no promotion needed!"
     fi
 
     echo_info "Waiting for cluster consensus to fully stabilize..."
-    sleep 5
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        sleep 10  # mTLS consensus needs more time
+    else
+        sleep 5
+    fi
 
     echo_success "🎊 AUTOMATIC CLUSTER FORMATION COMPLETE!"
 }
 
 verify_cluster_state() {
     echo_test "Verifying cluster state..."
+
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts="-k"
+        fi
+    fi
 
     local ports=($NODE1_HTTP $NODE2_HTTP $NODE3_HTTP)
     local declared_leader=""
@@ -421,7 +736,7 @@ verify_cluster_state() {
         local port=${ports[$i]}
 
         local leader_response
-        if leader_response=$(curl -s "http://127.0.0.1:$port/leader" 2>/dev/null); then
+        if leader_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$port/leader" 2>/dev/null); then
             local leader_id
             leader_id=$(echo "$leader_response" | jq -r '.leader' 2>/dev/null || echo "null")
             leader_responses+=("$leader_id")
@@ -458,7 +773,7 @@ verify_cluster_state() {
         local port=${ports[$i]}
 
         local is_leader_response
-        if is_leader_response=$(curl -s "http://127.0.0.1:$port/is-leader" 2>/dev/null); then
+        if is_leader_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$port/is-leader" 2>/dev/null); then
             local is_leader
             is_leader=$(echo "$is_leader_response" | jq -r '.is_leader' 2>/dev/null || echo "false")
             if [ "$is_leader" = "true" ]; then
@@ -484,15 +799,101 @@ verify_cluster_state() {
     fi
 }
 
+test_tls_connectivity() {
+    if [[ "$ENABLE_TLS" != "true" ]]; then
+        return 0
+    fi
+
+    echo_feature "🔐 Testing TLS connectivity..."
+    
+    local protocol="https"
+    local curl_opts=""
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        # For mTLS, we need to provide client certificates
+        curl_opts="-s -k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+    else
+        curl_opts="-s -k"
+    fi
+    
+    local ports=($NODE1_HTTP $NODE2_HTTP $NODE3_HTTP)
+    
+    for i in "${!ports[@]}"; do
+        local node_id=$((i + 1))
+        local port=${ports[$i]}
+        
+        echo_info "Testing TLS connection to Node $node_id..."
+        
+        # Test HTTPS health endpoint with proper TLS/mTLS authentication
+        local health_response
+        if health_response=$(curl $curl_opts "${protocol}://127.0.0.1:$port/health" 2>/dev/null); then
+            if echo "$health_response" | jq -e '.status == "healthy"' > /dev/null 2>&1; then
+                echo_success "  ✅ TLS health check passed"
+            else
+                echo_warning "  ⚠️  TLS health check returned: $health_response"
+            fi
+        else
+            echo_error "  ❌ TLS health check failed"
+            return 1
+        fi
+        
+        # Test certificate information
+        echo_info "  Certificate info:"
+        local cert_info
+        local openssl_opts=""
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            openssl_opts="-cert $CERTS_DIR/node1-cert.pem -key $CERTS_DIR/node1-key.pem"
+        fi
+        if cert_info=$(echo | openssl s_client -connect "127.0.0.1:$port" -servername localhost $openssl_opts 2>/dev/null | openssl x509 -noout -subject -dates 2>/dev/null); then
+            echo "    $(echo "$cert_info" | head -n 1)"
+            echo "    $(echo "$cert_info" | tail -n 2 | head -n 1)"
+        else
+            echo_info "    Certificate info not available"
+        fi
+    done
+    
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        echo_success "🔐 mTLS connectivity verified - mutual authentication working"
+    else
+        echo_success "🔐 TLS connectivity verified - encryption working"
+    fi
+}
+
 test_kv_operations() {
-    echo_feature "Testing distributed KV operations..."
+    local mode_desc="distributed KV operations"
+    local protocol="http"
+    local curl_opts=""
+    
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+            mode_desc="distributed KV operations over mTLS"
+        else
+            curl_opts="-k"  # Skip certificate verification for testing
+            mode_desc="distributed KV operations over TLS"
+        fi
+    fi
+    
+    echo_feature "Testing $mode_desc..."
 
     local test_data=(
         "cluster-test|distributed storage working!"
-        "config-test|TOML configuration system"
+        "config-test|TOML configuration system"       
         "perf-test|high performance distributed KV"
         "api-test|dual HTTP and gRPC APIs"
     )
+    
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        test_data+=(
+            "tls-test|encrypted communication verified"
+        )
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            test_data+=(
+                "mtls-test|mutual authentication verified"
+            )
+        fi
+    fi
 
     # Write operations
     echo_test "Testing write operations..."
@@ -502,9 +903,9 @@ test_kv_operations() {
 
         echo_info "Writing $key=$value..."
         local write_response
-        write_response=$(curl -s -X POST -H "Content-Type: application/json" \
+        write_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
             -d "{\"Set\":{\"key\":\"$key\",\"value\":\"$value\"}}" \
-            "http://127.0.0.1:$NODE1_HTTP/write" 2>/dev/null)
+            "${protocol}://127.0.0.1:$NODE1_HTTP/write" 2>/dev/null)
 
         if echo "$write_response" | jq -e '. == "Set"' > /dev/null 2>&1; then
             echo_success "  Write successful"
@@ -522,9 +923,9 @@ test_kv_operations() {
 
         echo_info "Reading $key from leader..."
         local read_response
-        read_response=$(curl -s -X POST -H "Content-Type: application/json" \
+        read_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
             -d "{\"key\":\"$key\"}" \
-            "http://127.0.0.1:$NODE1_HTTP/read" 2>/dev/null)
+            "${protocol}://127.0.0.1:$NODE1_HTTP/read" 2>/dev/null)
 
         local actual_value
         actual_value=$(echo "$read_response" | jq -r '.value' 2>/dev/null || echo "null")
@@ -546,9 +947,9 @@ test_kv_operations() {
         echo_info "Reading $key from $node_name (should enforce linearizability)..."
 
         local read_response
-        read_response=$(curl -s -X POST -H "Content-Type: application/json" \
+        read_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
             -d "{\"key\":\"$key\"}" \
-            "http://127.0.0.1:$port/read" 2>/dev/null)
+            "${protocol}://127.0.0.1:$port/read" 2>/dev/null)
 
         if echo "$read_response" | jq -e '.error' > /dev/null 2>&1; then
             local error_msg
@@ -570,18 +971,18 @@ test_kv_operations() {
 
     echo_info "Deleting $delete_key..."
     local delete_response
-    delete_response=$(curl -s -X POST -H "Content-Type: application/json" \
+    delete_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
         -d "{\"Delete\":{\"key\":\"$delete_key\"}}" \
-        "http://127.0.0.1:$NODE1_HTTP/write" 2>/dev/null)
+        "${protocol}://127.0.0.1:$NODE1_HTTP/write" 2>/dev/null)
     echo_success "Delete response: $delete_response"
 
     sleep 1
 
     echo_info "Verifying $delete_key is deleted..."
     local verify_response
-    verify_response=$(curl -s -X POST -H "Content-Type: application/json" \
+    verify_response=$(curl -s $curl_opts -X POST -H "Content-Type: application/json" \
         -d "{\"key\":\"$delete_key\"}" \
-        "http://127.0.0.1:$NODE1_HTTP/read" 2>/dev/null)
+        "${protocol}://127.0.0.1:$NODE1_HTTP/read" 2>/dev/null)
 
     local deleted_value
     deleted_value=$(echo "$verify_response" | jq -r '.value' 2>/dev/null || echo "null")
@@ -596,6 +997,18 @@ test_kv_operations() {
 test_auto_join_functionality() {
     echo_feature "🤝 VERIFYING AUTOMATIC CLUSTER FORMATION!"
     echo_info "Testing the complete auto-join functionality with TOML peer configuration"
+
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts="-k"
+        fi
+    fi
 
     local ports=($NODE1_HTTP $NODE2_HTTP $NODE3_HTTP)
 
@@ -614,14 +1027,14 @@ test_auto_join_functionality() {
         echo_info "Checking Node $node_id auto-join status..."
 
         local metrics_response
-        if metrics_response=$(curl -s "http://127.0.0.1:$port/metrics" 2>/dev/null); then
+        if metrics_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$port/metrics" 2>/dev/null); then
             # Parse cluster membership
             local membership_info
             membership_info=$(echo "$metrics_response" | jq -r '.membership_config.membership' 2>/dev/null || echo "null")
 
             if [[ "$membership_info" != "null" ]]; then
                 local voters_count
-                voters_count=$(echo "$membership_info" | jq -r '.voters | length' 2>/dev/null || echo "0")
+                voters_count=$(echo "$membership_info" | jq -r '.configs[-1] | length' 2>/dev/null || echo "0")
                 total_voters=$voters_count
                 successful_nodes=$((successful_nodes + 1))
 
@@ -679,7 +1092,7 @@ test_auto_join_functionality() {
         local leader_consensus=true
         for port in "${ports[@]}"; do
             local leader_response
-            if leader_response=$(curl -s "http://127.0.0.1:$port/leader" 2>/dev/null); then
+            if leader_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$port/leader" 2>/dev/null); then
                 local reported_leader
                 reported_leader=$(echo "$leader_response" | jq -r '.leader' 2>/dev/null || echo "null")
                 if [[ "$reported_leader" != "$consensus_leader" ]]; then
@@ -752,6 +1165,18 @@ test_grpc_api() {
 test_monitoring() {
     echo_feature "Testing monitoring and metrics..."
 
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts="-k"
+        fi
+    fi
+
     local ports=($NODE1_HTTP $NODE2_HTTP $NODE3_HTTP)
 
     for i in "${!ports[@]}"; do
@@ -760,7 +1185,7 @@ test_monitoring() {
 
         echo_info "Getting metrics from Node $node_id..."
         local metrics_response
-        if metrics_response=$(curl -s "http://127.0.0.1:$port/metrics" 2>/dev/null); then
+        if metrics_response=$(curl -s $curl_opts "${protocol}://127.0.0.1:$port/metrics" 2>/dev/null); then
             local current_leader
             local state
             local term
@@ -834,16 +1259,37 @@ show_cluster_status() {
 }
 
 run_performance_test() {
-    echo_feature "Running performance test..."
+    local test_desc="performance test"
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            test_desc="mTLS performance test"
+        else
+            test_desc="TLS performance test"
+        fi
+    fi
+    
+    echo_feature "Running $test_desc..."
+
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts="-k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts="-k"
+        fi
+    fi
 
     local start_time
     start_time=$(date +%s)
 
     echo_info "Writing 50 key-value pairs..."
     for i in {1..50}; do
-        curl -s -X POST -H "Content-Type: application/json" \
+        curl -s $curl_opts -X POST -H "Content-Type: application/json" \
             -d "{\"Set\":{\"key\":\"perf$i\",\"value\":\"performance test value $i\"}}" \
-            "http://127.0.0.1:$NODE1_HTTP/write" > /dev/null 2>&1
+            "${protocol}://127.0.0.1:$NODE1_HTTP/write" > /dev/null 2>&1
 
         if [ $((i % 10)) -eq 0 ]; then
             echo_info "  Written $i/50 keys..."
@@ -859,13 +1305,24 @@ run_performance_test() {
 }
 
 main() {
+    local title="🚀 FERRIUM COMPREHENSIVE CLUSTER TEST"
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            title="🔐 FERRIUM mTLS CLUSTER TEST"
+        else
+            title="🔐 FERRIUM TLS CLUSTER TEST"  
+        fi
+    fi
+    
     echo -e "${BLUE}=================================${NC}"
-    echo -e "${BLUE}🚀 FERRIUM COMPREHENSIVE CLUSTER TEST${NC}"
+    echo -e "${BLUE}$title${NC}"
     echo -e "${BLUE}=================================${NC}"
 
     # Show execution mode
     if [[ "$KEEP_RUNNING" == "true" ]]; then
         echo -e "${GREEN}🔧 Mode: Keep Running${NC} (cluster will persist for manual testing)"
+    elif [[ "$NO_CLEANUP" == "true" ]]; then
+        echo -e "${PURPLE}🐛 Mode: No Cleanup${NC} (for debugging - no cleanup on exit)"
     elif [[ "$SKIP_INTERACTIVE" == "true" ]]; then
         if [[ -n "$AUTO_CLEANUP_TIMEOUT" ]]; then
             echo -e "${YELLOW}⏱️  Mode: Auto Cleanup${NC} (cleanup after $AUTO_CLEANUP_TIMEOUT seconds)"
@@ -875,11 +1332,24 @@ main() {
     else
         echo -e "${CYAN}👤 Mode: Interactive${NC} (will prompt before cleanup)"
     fi
+    
+    # Show security mode
+    if [[ "$ENABLE_MTLS" == "true" ]]; then
+        echo -e "${PURPLE}🔐 Security: mTLS Enabled${NC} (mutual authentication + encryption)"
+    elif [[ "$ENABLE_TLS" == "true" ]]; then
+        echo -e "${PURPLE}🔐 Security: TLS Enabled${NC} (encryption only)"
+    else
+        echo -e "${CYAN}🌐 Security: Plain HTTP${NC} (no encryption)"
+    fi
     echo ""
 
     # Pre-flight checks
+    check_dependencies
     check_binary
     setup_test_environment
+
+    # TLS setup if enabled
+    setup_tls_certificates
 
     # Configuration system tests
     create_configurations
@@ -889,6 +1359,10 @@ main() {
     # Cluster lifecycle tests
     start_cluster
     check_health
+    
+    # TLS-specific tests
+    test_tls_connectivity
+    
     setup_cluster
     verify_cluster_state
 
@@ -910,16 +1384,43 @@ main() {
     echo -e "${GREEN}=================================${NC}"
     echo ""
 
+    # Show appropriate manual testing examples
+    local protocol="http"
+    local curl_opts=""
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        protocol="https"
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            # For mTLS, we need to provide client certificates
+            curl_opts=" -k --cert $CERTS_DIR/node1-cert.pem --key $CERTS_DIR/node1-key.pem"
+        else
+            curl_opts=" -k"
+        fi
+    fi
+
     echo -e "${CYAN}Manual testing examples:${NC}"
     echo "# Write operation:"
-    echo "curl -X POST -H 'Content-Type: application/json' -d '{\"Set\":{\"key\":\"manual-test\",\"value\":\"hello world\"}}' http://127.0.0.1:$NODE1_HTTP/write"
+    echo "curl$curl_opts -X POST -H 'Content-Type: application/json' -d '{\"Set\":{\"key\":\"manual-test\",\"value\":\"hello world\"}}' $protocol://127.0.0.1:$NODE1_HTTP/write"
     echo ""
     echo "# Read operation:"
-    echo "curl -X POST -H 'Content-Type: application/json' -d '{\"key\":\"manual-test\"}' http://127.0.0.1:$NODE1_HTTP/read"
+    echo "curl$curl_opts -X POST -H 'Content-Type: application/json' -d '{\"key\":\"manual-test\"}' $protocol://127.0.0.1:$NODE1_HTTP/read"
     echo ""
     echo "# Cluster metrics:"
-    echo "curl http://127.0.0.1:$NODE1_HTTP/metrics | jq"
+    echo "curl$curl_opts $protocol://127.0.0.1:$NODE1_HTTP/metrics | jq"
     echo ""
+    
+    if [[ "$ENABLE_TLS" == "true" ]]; then
+        echo -e "${PURPLE}TLS Testing:${NC}"
+        echo "# Test certificate info:"
+        echo "echo | openssl s_client -connect 127.0.0.1:$NODE1_HTTP -servername localhost"
+        echo ""
+        if [[ "$ENABLE_MTLS" == "true" ]]; then
+            echo -e "${PURPLE}mTLS certificates available at:${NC}"
+            echo "# CA Certificate: $CERTS_DIR/ca-cert.pem"
+            echo "# Node certificates: $CERTS_DIR/node[1-3]-cert.pem"
+            echo "# Node keys: $CERTS_DIR/node[1-3]-key.pem"
+            echo ""
+        fi
+    fi
 
     # Handle different execution modes
     if [[ "$KEEP_RUNNING" == "true" ]]; then
@@ -928,6 +1429,13 @@ main() {
         echo -e "${YELLOW}⚠️  Remember to run: pkill -f ferrium-server (when done)${NC}"
         # Don't run cleanup on exit in this mode
         trap - EXIT
+        exit 0
+    elif [[ "$NO_CLEANUP" == "true" ]]; then
+        echo -e "${PURPLE}🐛 Cluster is running for debugging - no cleanup will be performed${NC}"
+        echo -e "${CYAN}💡 Process IDs: $(pgrep -f ferrium-server | tr '\n' ' ')${NC}"
+        echo -e "${YELLOW}📁 Test data location: $TEST_DIR${NC}"
+        echo -e "${YELLOW}📝 Log files: $TEST_DIR/logs/node*.log${NC}"
+        echo -e "${RED}⚠️  Manual cleanup required: pkill -f ferrium-server && rm -rf $TEST_DIR${NC}"
         exit 0
     elif [[ "$SKIP_INTERACTIVE" == "true" ]]; then
         if [[ -n "$AUTO_CLEANUP_TIMEOUT" ]]; then
@@ -956,4 +1464,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

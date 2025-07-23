@@ -51,6 +51,31 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: cargo test --test integration_test --verbose
 
+    - name: Install OpenSSL for TLS tests
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openssl
+
+    - name: Run TLS integration tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test tls_integration_tests --verbose
+
+    - name: Run TLS cluster tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test tls_cluster_tests --verbose
+
+    - name: Build release binary for cluster tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo build --release --verbose
+
+    - name: Run real cluster integration tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test real_cluster_integration_test --verbose
+
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest

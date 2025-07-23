@@ -34,7 +34,7 @@ config.toml
 ferrium.toml
 
 # Development scripts
-test-cluster.sh
+scripts/test-cluster.sh
 *.sh
 
 # Temporary files

@@ -24,6 +24,10 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler openssl
 
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
@@ -38,10 +42,25 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: cargo test --test integration_test --verbose -- --include-ignored
 
+    - name: Run TLS integration tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test tls_integration_tests --verbose
+
+    - name: Run TLS cluster tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test tls_cluster_tests --verbose
+
+    - name: Run real cluster integration tests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: cargo test --test real_cluster_integration_test --verbose
+
   cluster-tests:
     name: Cluster Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -49,6 +68,10 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler openssl netcat-openbsd jq
 
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
@@ -59,26 +82,41 @@ jobs:
       run: cargo build --release
 
     - name: Make test script executable
-      run: chmod +x test-cluster.sh
+      run: chmod +x scripts/test-cluster.sh
 
-    - name: Run cluster integration tests
+    - name: Run plain HTTP cluster tests
       run: |
-        echo "🚀 Starting cluster integration tests..."
-        ./test-cluster.sh
-      timeout-minutes: 8
+        echo "🚀 Starting plain HTTP cluster integration tests..."
+        ./scripts/test-cluster.sh --ci
+      timeout-minutes: 5
+
+    - name: Run TLS cluster tests
+      run: |
+        echo "🔐 Starting TLS cluster integration tests..."
+        ./scripts/test-cluster.sh --tls --ci
+      timeout-minutes: 5
+
+    - name: Run mTLS cluster tests
+      run: |
+        echo "🔐🔐 Starting mTLS cluster integration tests..."
+        ./scripts/test-cluster.sh --mtls --ci
+      timeout-minutes: 5
 
     - name: Cleanup cluster artifacts
       if: always()
       run: |
         echo "🧹 Cleaning up cluster test artifacts..."
         pkill -f ferrium-server || true
+        rm -rf test-cluster-automated/ || true
         rm -rf test-cluster/ || true
         rm -f *.log || true
+        rm -f *.pem || true
+        rm -f *.csr || true
 
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -86,6 +124,10 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler openssl netcat-openbsd jq
 
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
@@ -102,19 +144,31 @@ jobs:
         # Run the large dataset storage test specifically
         cargo test --release test_large_dataset_storage --verbose
 
-    - name: Run cluster performance test
+    - name: Run plain HTTP cluster performance test
       run: |
-        echo "🏃‍♂️ Running cluster performance tests..."
-        chmod +x test-cluster.sh
-        # Run with additional performance testing flag if available
-        FERRIUM_PERF_TEST=1 ./test-cluster.sh
+        echo "🏃‍♂️ Running plain HTTP cluster performance tests..."
+        chmod +x scripts/test-cluster.sh
+        FERRIUM_PERF_TEST=1 ./scripts/test-cluster.sh --ci
+
+    - name: Run TLS cluster performance test
+      run: |
+        echo "🔐🏃‍♂️ Running TLS cluster performance tests..."
+        FERRIUM_PERF_TEST=1 ./scripts/test-cluster.sh --tls --ci
+
+    - name: Run mTLS cluster performance test
+      run: |
+        echo "🔐🔐🏃‍♂️ Running mTLS cluster performance tests..."
+        FERRIUM_PERF_TEST=1 ./scripts/test-cluster.sh --mtls --ci
 
     - name: Cleanup performance test artifacts
       if: always()
       run: |
         pkill -f ferrium-server || true
+        rm -rf test-cluster-automated/ || true
         rm -rf test-cluster/ || true
         rm -f *.log || true
+        rm -f *.pem || true
+        rm -f *.csr || true
 
   memory-tests:
     name: Memory Safety Tests

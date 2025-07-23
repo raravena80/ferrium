@@ -189,7 +189,7 @@ curl -X POST -H "Content-Type: application/json" -d '[1,2,3]' \
   http://127.0.0.1:21001/change-membership
 
 # Test the cluster
-./test-cluster.sh --ci
+./scripts/test-cluster.sh --ci
 ```
 
 ### 3. **Using Both APIs**
@@ -223,7 +223,8 @@ ferrium/
 │   ├── cluster-node1.toml      # Production cluster node
 │   └── high-performance.toml   # Performance-optimized
 ├── proto/                       # Protocol buffer definitions
-├── test-cluster.sh             # Comprehensive cluster testing script
+├── scripts/
+│   └── test-cluster.sh         # Comprehensive cluster testing script
 ├── CONFIG.md                   # Comprehensive configuration documentation
 └── README.md                   # Complete user guide
 ```

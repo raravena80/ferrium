@@ -1,0 +1,234 @@
+# Ferrium TLS/mTLS Example Configuration
+# This file demonstrates how to configure TLS and mutual TLS (mTLS) for secure communication
+
+[node]
+id = 1
+http_addr = "0.0.0.0:8001"
+grpc_addr = "0.0.0.0:9001"
+data_dir = "./data"
+name = "ferrium-node-1"
+description = "Primary Ferrium node with TLS enabled"
+
+[network]
+request_timeout = 30000
+connect_timeout = 10000
+keep_alive_interval = 60000
+max_retries = 3
+retry_delay = 100
+enable_compression = true
+max_message_size = 4194304
+
+[storage]
+enable_compression = true
+compaction_strategy = "level"
+max_log_size = 104857600
+log_retention_count = 10
+enable_wal = true
+sync_writes = false
+block_cache_size = 64
+write_buffer_size = 64
+
+[raft]
+heartbeat_interval = 250
+election_timeout_min = 299
+election_timeout_max = 500
+max_append_entries = 100
+enable_auto_compaction = true
+compaction_threshold = 1000
+max_inflight_requests = 10
+
+[raft.snapshot_policy]
+enable_auto_snapshot = true
+entries_since_last_snapshot = 1000
+snapshot_interval = 300000
+
+[logging]
+level = "info"
+format = "pretty"
+structured = false
+enable_colors = true
+
+[cluster]
+name = "ferrium-tls-cluster"
+expected_size = 3
+enable_auto_join = true
+leader_discovery_timeout = 30000
+auto_join_timeout = 60000
+auto_join_retry_interval = 5000
+auto_accept_learners = true
+
+[cluster.discovery]
+enabled = false
+method = "static"
+interval = 30000
+
+# Example peers for a 3-node cluster with TLS
+[[cluster.peer]]
+id = 1
+http_addr = "ferrium-node-1.local:8001"
+grpc_addr = "ferrium-node-1.local:9001"
+voting = true
+
+[[cluster.peer]]
+id = 2
+http_addr = "ferrium-node-2.local:8002"
+grpc_addr = "ferrium-node-2.local:9002"
+voting = true
+
+[[cluster.peer]]
+id = 3
+http_addr = "ferrium-node-3.local:8003"
+grpc_addr = "ferrium-node-3.local:9003"
+voting = true
+
+# ===== TLS CONFIGURATION =====
+[security]
+# Enable TLS for all communications (HTTP and gRPC)
+enable_tls = true
+
+# Server certificate and private key (PEM format)
+# These files should contain the server's certificate and private key
+cert_file = "/etc/ferrium/tls/server.crt"
+key_file = "/etc/ferrium/tls/server.key"
+
+# Certificate Authority (CA) certificate (PEM format)
+# Used for verifying client certificates in mTLS mode
+# Also used by clients to verify server certificates
+ca_file = "/etc/ferrium/tls/ca.crt"
+
+# Enable mutual TLS (mTLS) - requires client certificates
+# When enabled, both server and client authenticate each other
+enable_mtls = true
+
+# Accept invalid certificates (for testing with self-signed certificates)
+# WARNING: Only use in test environments - this disables certificate validation
+accept_invalid_certs = false
+
+# Authentication method (when mTLS is disabled, you might want to use other methods)
+# Options: "none", "token", "certificate", "jwt"
+auth_method = "certificate"
+
+# ===== TLS CERTIFICATE GENERATION EXAMPLES =====
+#
+# Here are example commands to generate certificates for testing.
+# DO NOT use these certificates in production!
+#
+# 1. Generate CA private key and certificate:
+#    openssl genrsa -out ca.key 4096
+#    openssl req -new -x509 -key ca.key -sha256 -subj "/C=US/ST=CA/O=Ferrium/CN=Ferrium CA" -days 3650 -out ca.crt
+#
+# 2. Generate server private key:
+#    openssl genrsa -out server.key 4096
+#
+# 3. Create server certificate signing request:
+#    openssl req -new -key server.key -out server.csr -config <(cat <<EOF
+# [req]
+# default_bits = 4096
+# prompt = no
+# distinguished_name = req_distinguished_name
+# req_extensions = req_ext
+# 
+# [req_distinguished_name]
+# C = US
+# ST = CA
+# O = Ferrium
+# CN = ferrium-node-1.local
+# 
+# [req_ext]
+# subjectAltName = @alt_names
+# 
+# [alt_names]
+# DNS.1 = ferrium-node-1.local
+# DNS.2 = localhost
+# IP.1 = 127.0.0.1
+# IP.2 = ::1
+# EOF
+#    )
+#
+# 4. Sign server certificate with CA:
+#    openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256 -extensions req_ext -extfile <(cat <<EOF
+# [req_ext]
+# subjectAltName = @alt_names
+# 
+# [alt_names]
+# DNS.1 = ferrium-node-1.local
+# DNS.2 = localhost
+# IP.1 = 127.0.0.1
+# IP.2 = ::1
+# EOF
+#    )
+#
+# 5. For client certificates (if using mTLS), repeat steps 2-4 with appropriate CN and SAN
+#    The client can use the same certificates as the server for testing.
+#
+# 6. Set appropriate permissions:
+#    chmod 600 *.key
+#    chmod 644 *.crt
+#
+# ===== DOCKER TLS SETUP =====
+#
+# When running in Docker, mount the certificates as volumes:
+#
+# docker run -d \
+#   --name ferrium-node-1 \
+#   -p 8001:8001 \
+#   -p 9001:9001 \
+#   -v /path/to/certs:/etc/ferrium/tls:ro \
+#   -v /path/to/data:/data \
+#   ferrium:latest \
+#   --config /etc/ferrium/config.toml
+#
+# ===== KUBERNETES TLS SETUP =====
+#
+# Create a TLS secret:
+# kubectl create secret tls ferrium-tls \
+#   --cert=server.crt \
+#   --key=server.key
+#
+# kubectl create secret generic ferrium-ca \
+#   --from-file=ca.crt=ca.crt
+#
+# Then mount these secrets in your pod:
+# volumes:
+# - name: tls-certs
+#   secret:
+#     secretName: ferrium-tls
+# - name: ca-cert
+#   secret:
+#     secretName: ferrium-ca
+#
+# volumeMounts:
+# - name: tls-certs
+#   mountPath: /etc/ferrium/tls
+#   readOnly: true
+# - name: ca-cert
+#   mountPath: /etc/ferrium/ca
+#   readOnly: true
+
+# ===== PERFORMANCE CONSIDERATIONS =====
+#
+# TLS adds encryption overhead. Consider:
+# 1. Use hardware acceleration if available (AES-NI)
+# 2. Prefer ECDSA certificates over RSA for better performance
+# 3. Enable HTTP/2 for gRPC (enabled by default with TLS)
+# 4. Monitor CPU usage and network latency
+# 5. Consider using certificate caching in high-throughput scenarios
+
+# ===== TROUBLESHOOTING =====
+#
+# Common TLS issues:
+# 1. Certificate/hostname mismatch - ensure CN or SAN matches the hostname
+# 2. CA verification failure - ensure ca.crt is properly configured and trusted
+# 3. Certificate expiration - check certificate validity dates
+# 4. Permission errors - ensure Ferrium can read certificate files
+# 5. Protocol mismatch - ensure all nodes use the same TLS configuration
+#
+# Enable debug logging to troubleshoot:
+# [logging]
+# level = "debug"
+#
+# Check certificate validity:
+# openssl x509 -in server.crt -text -noout
+#
+# Test TLS connection:
+# openssl s_client -connect ferrium-node-1.local:8001 -CAfile ca.crt 

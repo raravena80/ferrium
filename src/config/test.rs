@@ -203,6 +203,7 @@ voting = true
 [security]
 enable_tls = false
 enable_mtls = false
+accept_invalid_certs = false
 auth_method = "none"
 "#;
 

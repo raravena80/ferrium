@@ -15,6 +15,7 @@ allow = [
     "Unicode-3.0",
     "MPL-2.0",
     "CDLA-Permissive-2.0",
+    "OpenSSL",
 ]
 
 [bans]
@@ -44,4 +45,4 @@ unknown-git = "warn"
 # List of allowed crate registries
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # List of allowed Git repositories
-allow-git = [] 
+allow-git = []

@@ -8,6 +8,7 @@ pub mod config;
 pub mod grpc;
 pub mod network;
 pub mod storage;
+pub mod tls;
 
 pub use config::{KvRequest, KvResponse, KvSnapshot, Node, NodeId, TypeConfig};
 pub use network::{HttpNetwork, HttpNetworkFactory, NetworkConfig};

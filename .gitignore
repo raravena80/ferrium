@@ -72,4 +72,4 @@ ferrium
 
 # Cluster configuration
 cluster.json
-nodes.json 
+nodes.json test-artifacts/

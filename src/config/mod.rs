@@ -303,6 +303,9 @@ pub struct SecurityConfig {
     pub ca_file: Option<PathBuf>,
     /// Enable mutual TLS authentication
     pub enable_mtls: bool,
+    /// Accept invalid certificates (for testing with self-signed certificates)
+    /// WARNING: Only use in test environments - this disables certificate validation
+    pub accept_invalid_certs: bool,
     /// Authentication method
     pub auth_method: AuthMethod,
 }
@@ -455,6 +458,7 @@ impl Default for SecurityConfig {
             key_file: None,
             ca_file: None,
             enable_mtls: false,
+            accept_invalid_certs: false,
             auth_method: AuthMethod::None,
         }
     }

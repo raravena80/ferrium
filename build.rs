@@ -4,7 +4,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build_server(true)
         .build_client(true)
         .out_dir("src/grpc") // Output directory for generated code
-        .compile(
+        .compile_protos(
             &[
                 "proto/kv.proto",
                 "proto/management.proto",

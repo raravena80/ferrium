@@ -58,27 +58,6 @@ jobs:
     - name: Install cargo-deny
       run: cargo install --locked cargo-deny
 
-    - name: Create default deny.toml if not exists
-      run: |
-        if [ ! -f deny.toml ]; then
-          echo "Creating default deny.toml configuration..."
-          cat > deny.toml << 'EOF'
-        [licenses]
-        allow = [
-            "Apache-2.0",
-            "MIT",
-            "BSD-2-Clause",
-            "BSD-3-Clause",
-            "ISC",
-            "Unicode-DFS-2016",
-            "Zlib",
-            "(MIT OR Apache-2.0) AND Unicode-3.0",
-            "Unicode-3.0",
-            "MPL-2.0"
-        ]
-        EOF
-        fi
-
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
 
@@ -136,3 +115,4 @@ jobs:
       run: |
         echo "🔍 Analyzing unsafe code usage..."
         cargo geiger --format GitHubMarkdown >> $GITHUB_STEP_SUMMARY || true
+

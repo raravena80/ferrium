@@ -142,7 +142,9 @@ jobs:
 
     - name: Run Miri for memory safety checks
       run: |
-        # Miri can't run all tests, focus on core logic without I/O
+        # Miri can't run tests that use RocksDB FFI calls
+        # Tests using RocksDB are conditionally excluded with #[cfg(not(miri))]
         cargo +nightly miri test --lib -- --test-threads=1
       env:
         MIRIFLAGS: -Zmiri-disable-isolation
+

@@ -30,6 +30,9 @@ fn create_test_config_with_peers(
 }
 
 /// Helper function to create a mock ManagementApi for testing
+/// Note: This function may appear unused when running under Miri, as all tests
+/// that use it are conditionally compiled with #[cfg(not(miri))]
+#[allow(dead_code)]
 async fn create_test_management_api(node_id: NodeId, config: FerriteConfig) -> ManagementApi {
     use crate::storage::new_storage;
     use openraft::Raft;
@@ -121,6 +124,7 @@ fn test_url_construction_logic() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_management_api_creation() {
     let config = create_test_config_with_peers(1, vec![(2, "127.0.0.1:8002", "127.0.0.1:9002")]);
     let mgmt_api = create_test_management_api(1, config.clone()).await;
@@ -131,6 +135,7 @@ async fn test_management_api_creation() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_is_leader_functionality() {
     let config = create_test_config_with_peers(1, vec![]);
     let mgmt_api = create_test_management_api(1, config).await;
@@ -150,6 +155,7 @@ async fn test_is_leader_functionality() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_cluster_initialization() {
     let config = create_test_config_with_peers(1, vec![]);
     let mgmt_api = create_test_management_api(1, config).await;
@@ -165,6 +171,7 @@ async fn test_cluster_initialization() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_kv_operations_after_init() {
     let config = create_test_config_with_peers(1, vec![]);
     let mgmt_api = create_test_management_api(1, config).await;
@@ -394,6 +401,7 @@ fn test_multiple_peer_discovery_scenarios() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_metrics_collection() {
     let config = create_test_config_with_peers(1, vec![]);
     let mgmt_api = create_test_management_api(1, config).await;
@@ -457,6 +465,7 @@ fn test_configuration_edge_cases() {
 }
 
 #[tokio::test]
+#[cfg(not(miri))] // Skip this test when running under Miri due to RocksDB FFI
 async fn test_concurrent_operations() {
     let config = create_test_config_with_peers(1, vec![]);
     let mgmt_api = create_test_management_api(1, config).await;

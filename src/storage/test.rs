@@ -1,3 +1,6 @@
+//! Storage tests - all tests are skipped under Miri due to RocksDB FFI
+#![cfg(not(miri))]
+
 use super::*;
 use openraft::storage::RaftLogStorage;
 use openraft::{CommittedLeaderId, EntryPayload, Membership};

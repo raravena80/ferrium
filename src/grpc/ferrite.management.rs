@@ -2,10 +2,8 @@
 /// Initialize cluster
 ///
 /// Empty for now - single node initialization
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct InitializeRequest {}
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InitializeResponse {
     #[prost(bool, tag = "1")]
@@ -14,7 +12,6 @@ pub struct InitializeResponse {
     pub error: ::prost::alloc::string::String,
 }
 /// Add learner node
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddLearnerRequest {
     #[prost(uint64, tag = "1")]
@@ -24,7 +21,6 @@ pub struct AddLearnerRequest {
     #[prost(string, tag = "3")]
     pub api_addr: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AddLearnerResponse {
     #[prost(bool, tag = "1")]
@@ -33,13 +29,11 @@ pub struct AddLearnerResponse {
     pub error: ::prost::alloc::string::String,
 }
 /// Change membership
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChangeMembershipRequest {
     #[prost(uint64, repeated, tag = "1")]
     pub member_ids: ::prost::alloc::vec::Vec<u64>,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ChangeMembershipResponse {
     #[prost(bool, tag = "1")]
@@ -50,10 +44,8 @@ pub struct ChangeMembershipResponse {
 /// Cluster metrics
 ///
 /// Empty for now
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct MetricsRequest {}
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MetricsResponse {
     #[prost(string, tag = "1")]
@@ -73,7 +65,6 @@ pub struct MetricsResponse {
     #[prost(string, tag = "8")]
     pub error: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MembershipConfig {
     #[prost(uint64, tag = "1")]
@@ -85,7 +76,6 @@ pub struct MembershipConfig {
     #[prost(map = "uint64, message", tag = "4")]
     pub nodes: ::std::collections::HashMap<u64, NodeInfo>,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NodeInfo {
     #[prost(string, tag = "1")]
@@ -93,8 +83,7 @@ pub struct NodeInfo {
     #[prost(string, tag = "2")]
     pub api_addr: ::prost::alloc::string::String,
 }
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct ReplicationStatus {
     #[prost(uint64, tag = "1")]
     pub term: u64,
@@ -104,10 +93,8 @@ pub struct ReplicationStatus {
 /// Health check
 ///
 /// Empty for now
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct HealthRequest {}
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HealthResponse {
     #[prost(string, tag = "1")]
@@ -120,10 +107,8 @@ pub struct HealthResponse {
 /// Leader information
 ///
 /// Empty for now
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct LeaderRequest {}
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LeaderResponse {
     #[prost(uint64, optional, tag = "1")]
@@ -135,7 +120,13 @@ pub struct LeaderResponse {
 }
 /// Generated client implementations.
 pub mod management_service_client {
-    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     /// Management Service for cluster operations
@@ -158,8 +149,8 @@ pub mod management_service_client {
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
-        T::ResponseBody: Body<Data = Bytes> + Send + 'static,
-        <T::ResponseBody as Body>::Error: Into<StdError> + Send,
+        T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
+        <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
     {
         pub fn new(inner: T) -> Self {
             let inner = tonic::client::Grpc::new(inner);
@@ -184,7 +175,7 @@ pub mod management_service_client {
             >,
             <T as tonic::codegen::Service<
                 http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             ManagementServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -231,8 +222,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -259,8 +249,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -287,8 +276,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -318,8 +306,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -343,8 +330,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -371,8 +357,7 @@ pub mod management_service_client {
                 .ready()
                 .await
                 .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
+                    tonic::Status::unknown(
                         format!("Service was not ready: {}", e.into()),
                     )
                 })?;
@@ -391,11 +376,17 @@ pub mod management_service_client {
 }
 /// Generated server implementations.
 pub mod management_service_server {
-    #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
+    #![allow(
+        unused_variables,
+        dead_code,
+        missing_docs,
+        clippy::wildcard_imports,
+        clippy::let_unit_value,
+    )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with ManagementServiceServer.
     #[async_trait]
-    pub trait ManagementService: Send + Sync + 'static {
+    pub trait ManagementService: std::marker::Send + std::marker::Sync + 'static {
         /// Initialize a single-node cluster
         async fn initialize(
             &self,
@@ -438,20 +429,18 @@ pub mod management_service_server {
     }
     /// Management Service for cluster operations
     #[derive(Debug)]
-    pub struct ManagementServiceServer<T: ManagementService> {
-        inner: _Inner<T>,
+    pub struct ManagementServiceServer<T> {
+        inner: Arc<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
         max_decoding_message_size: Option<usize>,
         max_encoding_message_size: Option<usize>,
     }
-    struct _Inner<T>(Arc<T>);
-    impl<T: ManagementService> ManagementServiceServer<T> {
+    impl<T> ManagementServiceServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
         pub fn from_arc(inner: Arc<T>) -> Self {
-            let inner = _Inner(inner);
             Self {
                 inner,
                 accept_compression_encodings: Default::default(),
@@ -501,8 +490,8 @@ pub mod management_service_server {
     impl<T, B> tonic::codegen::Service<http::Request<B>> for ManagementServiceServer<T>
     where
         T: ManagementService,
-        B: Body + Send + 'static,
-        B::Error: Into<StdError> + Send + 'static,
+        B: Body + std::marker::Send + 'static,
+        B::Error: Into<StdError> + std::marker::Send + 'static,
     {
         type Response = http::Response<tonic::body::BoxBody>;
         type Error = std::convert::Infallible;
@@ -514,7 +503,6 @@ pub mod management_service_server {
             Poll::Ready(Ok(()))
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
-            let inner = self.inner.clone();
             match req.uri().path() {
                 "/ferrite.management.ManagementService/Initialize" => {
                     #[allow(non_camel_case_types)]
@@ -545,7 +533,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = InitializeSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -591,7 +578,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = AddLearnerSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -638,7 +624,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = ChangeMembershipSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -684,7 +669,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = GetMetricsSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -731,7 +715,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = HealthCheckSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -777,7 +760,6 @@ pub mod management_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let inner = inner.0;
                         let method = GetLeaderSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
@@ -796,20 +778,25 @@ pub mod management_service_server {
                 }
                 _ => {
                     Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
                     })
                 }
             }
         }
     }
-    impl<T: ManagementService> Clone for ManagementServiceServer<T> {
+    impl<T> Clone for ManagementServiceServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -821,18 +808,9 @@ pub mod management_service_server {
             }
         }
     }
-    impl<T: ManagementService> Clone for _Inner<T> {
-        fn clone(&self) -> Self {
-            Self(Arc::clone(&self.0))
-        }
-    }
-    impl<T: std::fmt::Debug> std::fmt::Debug for _Inner<T> {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{:?}", self.0)
-        }
-    }
-    impl<T: ManagementService> tonic::server::NamedService
-    for ManagementServiceServer<T> {
-        const NAME: &'static str = "ferrite.management.ManagementService";
+    /// Generated gRPC service name
+    pub const SERVICE_NAME: &str = "ferrite.management.ManagementService";
+    impl<T> tonic::server::NamedService for ManagementServiceServer<T> {
+        const NAME: &'static str = SERVICE_NAME;
     }
 }

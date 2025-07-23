@@ -44,7 +44,7 @@ byteorder = "1.4"
 tonic = "0.12"
 prost = "0.13"
 tokio-stream = "0.1"
-tower = "0.4"
+tower = "0.5"
 
 # Configuration
 toml = "0.8"

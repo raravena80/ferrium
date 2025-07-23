@@ -41,7 +41,7 @@ async-trait = "0.1"
 byteorder = "1.4"
 
 # gRPC dependencies
-tonic = "0.12"
+tonic = "0.13"
 prost = "0.13"
 tokio-stream = "0.1"
 tower = "0.4"

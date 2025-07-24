@@ -3,8 +3,30 @@ name: CI
 on:
   push:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.dockerignore'
+      - '*.txt'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'IMPLEMENTATION_STATUS.md'
+      - 'CONFIG.md'
   pull_request:
     branches: [ main, develop ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE*'
+      - '.gitignore'
+      - '.dockerignore'
+      - '*.txt'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'IMPLEMENTATION_STATUS.md'
+      - 'CONFIG.md'
 
 env:
   CARGO_TERM_COLOR: always

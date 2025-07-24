@@ -1,43 +1,162 @@
-# Build artifacts
+# ====================
+# DOCKER IGNORE FILE
+# ====================
+# Optimized for Ferrium (Rust project)
+
+# ====================
+# Build & Cache Artifacts
+# ====================
 target/
 **/*.rs.bk
+**/.cargo/
+**/Cargo.lock.bak
 
-# IDE files
+# Rust compilation artifacts
+**/*.pdb
+**/*.dSYM/
+
+# ====================
+# Development Tools & IDE
+# ====================
 .idea/
 .vscode/
 *.swp
 *.swo
+*.orig
+.vim/
+.emacs.d/
 
-# OS files
+# ====================
+# Operating System
+# ====================
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Git
+# ====================
+# Version Control
+# ====================
 .git/
 .gitignore
+.gitattributes
+.gitmodules
 
-# Documentation
-*.md
-docs/
-
-# CI/CD
+# ====================
+# CI/CD & GitHub
+# ====================
 .github/
 .travis.yml
 .appveyor.yml
+.codecov.yml
 
-# Test artifacts
+# ====================
+# Documentation (Optional)
+# ====================
+# NOTE: Comment out if you want docs in Docker image
+*.md
+docs/
+CHANGELOG.md
+CONFIG.md
+IMPLEMENTATION_STATUS.md
+
+# ====================
+# Testing & Coverage
+# ====================
+coverage/
 test-cluster/
+test-cluster-automated/
 *.log
+*.tmp
+*.temp
+tmp/
+.nyc_output/
+.coverage
 
-# Configuration files (may contain secrets)
+# ====================
+# Configuration Files
+# ====================
+# NOTE: Be careful with config files - some might be needed as examples
 config.toml
 ferrium.toml
+node*.toml
 
-# Development scripts
+# User-specific config (exclude)
+~/.ferrium.toml
+/etc/ferrium/
+
+# Example configs (keep these - comment out to exclude)
+# examples/
+# ferrium-default.toml
+
+# ====================
+# Development Scripts
+# ====================
+# Exclude development scripts but keep essential ones
 scripts/test-cluster.sh
-*.sh
+scripts/dev-*.sh
+scripts/validate-*.sh
 
-# Temporary files
-tmp/
+# Keep deployment/production scripts (comment these out to exclude)
+# scripts/docker-*.sh
+# scripts/deploy-*.sh
+
+# ====================
+# Development Dependencies
+# ====================
+# Exclude dependency source directories if they exist
+
+# ====================
+# Runtime Artifacts
+# ====================
+logs/
+*.log.*
+ferrium-*.log
+data/
+db/
+
+# ====================
+# Security & Secrets
+# ====================
+# NOTE: These should never be in Docker images
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+certs/
+
+# But allow example/test certificates
+!examples/**/*.pem
+!examples/**/*.crt
+!test-ca/
+
+# ====================
+# Temporary & Cache Files
+# ====================
 *.tmp
-*.temp 
+*.temp
+*.cache
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# ====================
+# Backup Files  
+# ====================
+*~
+*.bak
+*.backup
+*.old
+*.orig
+
+# ====================
+# Lock Files (keep Cargo.lock)
+# ====================
+package-lock.json
+yarn.lock
+# NOTE: Keep Cargo.lock for reproducible builds
+# Cargo.lock 

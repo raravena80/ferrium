@@ -1,6 +1,6 @@
 [package]
 name = "ferrium"
-version = "0.1.0"
+version = "0.1.0-beta1"
 edition = "2021"
 description = "A distributed KV storage system built with openraft"
 license = "Apache-2.0"

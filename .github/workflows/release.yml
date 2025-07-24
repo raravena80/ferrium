@@ -1,5 +1,4 @@
 name: Release
-
 on:
   push:
     tags:
@@ -10,18 +9,14 @@ on:
         description: 'Version to release (e.g., v1.0.0)'
         required: true
         type: string
-
 env:
   CARGO_TERM_COLOR: always
-
 # Add explicit permissions for the entire workflow
 permissions:
   contents: write  # Required for creating releases and uploading assets
   packages: write  # Required for Docker registry
   actions: read    # Required for workflow access
-
 jobs:
-
   build-release:
     name: Build Release
     runs-on: ${{ matrix.os }}
@@ -48,42 +43,51 @@ jobs:
             target: x86_64-pc-windows-msvc
             artifact-name: ferrium-windows-x86_64.exe
             cross: false
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
+    - name: Determine checkout ref
+      id: checkout_ref
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "ref=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Checking out tag: ${{ inputs.version }}"
+        else
+          echo "ref=${GITHUB_REF}" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "Checking out ref: ${GITHUB_REF}"
+        fi
+
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.checkout_ref.outputs.ref }}
 
     - name: Get version
       id: get_version
       shell: bash
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        fi
+        echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
 
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
         targets: ${{ matrix.target }}
-
     # protoc is now handled automatically by protoc-prebuilt in build.rs
-
     - name: Install cross-compilation dependencies
       if: matrix.cross
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-aarch64-linux-gnu
-
     - name: Install cross
       if: matrix.cross
       run: cargo install cross --git https://github.com/cross-rs/cross
-
     - name: Cache dependencies
       uses: Swatinem/rust-cache@v2
       with:
         key: ${{ matrix.target }}
-
     - name: Build release binary
       shell: bash
       env:
@@ -94,7 +98,6 @@ jobs:
         else
           cargo build --release --target ${{ matrix.target }}
         fi
-
     - name: Prepare artifact
       shell: bash
       run: |
@@ -103,80 +106,151 @@ jobs:
         else
           mv target/${{ matrix.target }}/release/ferrium-server ${{ matrix.artifact-name }}
         fi
-
-    - name: Create Release and Upload Assets
+    - name: Upload Release Asset
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.get_version.outputs.version }}
         name: Ferrium ${{ steps.get_version.outputs.version }}
         body: |
           ## Ferrium ${{ steps.get_version.outputs.version }}
-
           ### Installation
-
           #### Download Binary
           Download the appropriate binary for your platform from the assets below.
-
           #### Install from Source
           ```bash
-          # Download the appropriate binary for your platform from the assets below
-          # or install from source:
+          # Install from crates.io
+          cargo install ferrium
+          # Or install from git
           cargo install --git https://github.com/raravena80/ferrium --tag ${{ steps.get_version.outputs.version }}
           ```
-
           ### Docker
           ```bash
           # Pull from GitHub Container Registry
           docker run --rm -p 8001:8001 -p 9001:9001 ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.version }}
-
           # Or use the latest tag
           docker run --rm -p 8001:8001 -p 9001:9001 ghcr.io/${{ github.repository }}:latest
           ```
-
           ### Changes
           See the [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
         files: ${{ matrix.artifact-name }}
-        draft: true
         prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
-
-  # Disabled: publish-crate job removed since "ferrium" name is taken on crates.io
-  # Re-enable this job if you rename the crate or want to publish under a different name
-
-  docker-release:
-    name: Docker Release
+  publish-crate:
+    name: Publish to crates.io
     runs-on: ubuntu-latest
     steps:
+    - name: Determine checkout ref
+      id: checkout_ref
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "ref=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Checking out tag: ${{ inputs.version }}"
+        else
+          echo "ref=${GITHUB_REF}" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "Checking out ref: ${GITHUB_REF}"
+        fi
+
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.checkout_ref.outputs.ref }}
 
     - name: Get version
       id: get_version
       shell: bash
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    - name: Install protoc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+    - name: Verify version matches Cargo.toml
+      shell: bash
+      run: |
+        CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+        TAG_VERSION="${{ steps.get_version.outputs.version }}"
+        # Remove 'v' prefix if present
+        TAG_VERSION=${TAG_VERSION#v}
+        echo "Cargo.toml version: $CARGO_VERSION"
+        echo "Git tag version: $TAG_VERSION"
+        if [[ "$CARGO_VERSION" != "$TAG_VERSION" ]]; then
+          echo "❌ Version mismatch: Cargo.toml ($CARGO_VERSION) != Tag ($TAG_VERSION)"
+          echo "Please update Cargo.toml version to match the release tag"
+          exit 1
         fi
+        echo "✅ Version verification passed"
+    - name: Build and test
+      run: |
+        cargo build --release
+        cargo test
+    - name: Publish to crates.io
+      shell: bash
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      run: |
+        echo "Publishing ferrium ${{ steps.get_version.outputs.version }} to crates.io..."
+        cargo publish --token $CARGO_REGISTRY_TOKEN
+  docker-build:
+    name: Docker Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false  # Continue other builds if one fails
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            # Try ARM64 runners first, fallback to emulation if not available
+            runner: ubuntu-latest  # Change to 'arm-runner' if you have self-hosted ARM64 runners
+            arch: arm64
+    steps:
+    - name: Determine checkout ref
+      id: checkout_ref
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "ref=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Checking out tag: ${{ inputs.version }}"
+        else
+          echo "ref=${GITHUB_REF}" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "Checking out ref: ${GITHUB_REF}"
+        fi
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.checkout_ref.outputs.ref }}
+
+    - name: Get version
+      id: get_version
+      shell: bash
+      run: |
+        echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: ghcr.io/${{ github.repository }}
         tags: |
-          type=ref,event=tag
-          type=raw,value=latest,enable={{is_default_branch}}
+          type=ref,event=tag,suffix=-${{ matrix.arch }}
+          type=raw,value=latest-${{ matrix.arch }},enable={{is_default_branch}}
         labels: |
           org.opencontainers.image.title=Ferrium
           org.opencontainers.image.description=A distributed KV storage system built with openraft
@@ -184,14 +258,50 @@ jobs:
           org.opencontainers.image.source=https://github.com/${{ github.repository }}
           org.opencontainers.image.version=${{ steps.get_version.outputs.version }}
           org.opencontainers.image.revision=${{ github.sha }}
-
     - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ matrix.platform }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=gha,scope=${{ matrix.arch }}
+        cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+  docker-manifest:
+    name: Create Multi-Arch Manifest
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+    - name: Get version
+      id: get_version
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "Using version from manual trigger: ${{ inputs.version }}"
+        else
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "Using version from tag: ${GITHUB_REF#refs/tags/}"
+        fi
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create and push multi-arch manifest
+      shell: bash
+      run: |
+        # Extract repository name
+        REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        # Create multi-arch manifest for versioned tag
+        docker buildx imagetools create -t ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }} \
+          ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }}-amd64 \
+          ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }}-arm64
+        # Create multi-arch manifest for latest tag (if default branch)
+        if [[ "${{ github.ref }}" == "refs/heads/${{ github.event.repository.default_branch }}" ]] || [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          docker buildx imagetools create -t ghcr.io/${REPO_NAME}:latest \
+            ghcr.io/${REPO_NAME}:latest-amd64 \
+            ghcr.io/${REPO_NAME}:latest-arm64
+        fi

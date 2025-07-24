@@ -1,306 +1,262 @@
 # Ferrium Implementation Status
 
-## 🎉 **PRODUCTION READY - 100% COMPLETE**
+## 🎯 **Beta Release - Feature Complete with Production Testing**
 
-Ferrium has evolved from a proof-of-concept into a **production-ready, enterprise-grade distributed KV storage system** with comprehensive features, successful multi-node cluster testing, and **fully working automatic cluster formation**.
+Ferrium is a **well-tested distributed KV storage system** built with Rust and openraft. With comprehensive TLS/mTLS support, successful 3-node cluster testing, and robust auto-join functionality, this is a **beta-stage project** ready for production evaluation and non-critical deployments.
 
-## ✅ **Fully Implemented & Tested Features**
+## ✅ **Working Features**
 
 ### 🏗️ **Core Distributed System**
-- **✅ Raft Consensus Protocol**: Built on openraft with strong consistency and fault tolerance
-- **✅ Persistent Storage**: RocksDB-based storage with automatic snapshots and log compaction
-- **✅ Dynamic Membership**: Add/remove nodes without downtime (tested with 3-node cluster)
-- **✅ Leader Election**: Automatic failover with configurable timeouts
-- **✅ Linearizable Reads**: Strong consistency guarantees for all operations (enforced on followers)
-- **✅ State Machine**: In-memory cache with disk persistence for performance
-- **✅ Automatic Cluster Formation**: Nodes automatically discover and join existing clusters
+- **✅ Raft Consensus Protocol**: Basic implementation using openraft
+- **✅ Persistent Storage**: RocksDB-based storage with snapshots 
+- **✅ Dynamic Membership**: Basic add/remove nodes functionality
+- **✅ Leader Election**: Automatic leader selection works in testing
+- **✅ Basic State Machine**: In-memory cache with disk persistence
+- **⚠️ Cluster Formation**: Auto-join functionality implemented but needs more testing
 
-### ⚙️ **Enterprise Configuration System**
-- **✅ TOML Configuration Files**: Comprehensive settings management with 60+ parameters
-- **✅ TOML Array Format**: Modern `[[cluster.peer]]` configuration for peer lists
-- **✅ CLI Override Support**: Environment-specific parameter overrides
-- **✅ Multiple Config Locations**: Automatic discovery from standard paths (`~/.ferrium.toml`, `/etc/ferrium/`, etc.)
-- **✅ Configuration Validation**: Extensive validation with helpful error messages
-- **✅ Configuration Generation**: `--generate-config` for default configuration creation
-- **✅ Hot Configuration**: Runtime configuration updates where applicable
+### ⚙️ **Configuration System**
+- **✅ TOML Configuration**: Basic configuration file support
+- **✅ CLI Overrides**: Command-line parameter support
+- **✅ Config Validation**: Basic validation with error messages
+- **✅ Config Generation**: `--generate-config` command
+- **⚠️ Hot Configuration**: Limited runtime updates
 
-**Configuration Sections:**
-- 🖥️ **Node**: ID, addresses, data directory, metadata
-- 🌐 **Network**: Timeouts, retries, compression, message limits
-- 💾 **Storage**: Compression, compaction, caching, durability settings
-- 🗳️ **Raft**: Consensus parameters, election timeouts, batch sizes
-- 📊 **Logging**: Levels, formats, rotation, structured logging
-- 👥 **Cluster**: Peer discovery, membership, priorities, **auto-join configuration**
-- 🔒 **Security**: TLS configuration structure (custom certificates not yet implemented)
-
-### 🤝 **Automatic Cluster Formation**
-- **✅ Auto-Discovery**: Nodes automatically find existing cluster leaders
-- **✅ Auto-Join Requests**: New nodes request to join as learners automatically
-- **✅ Auto-Accept**: Leaders automatically accept trusted peers (configurable)
-- **✅ Background Processing**: Auto-join runs asynchronously during startup
-- **✅ Configurable Timeouts**: Customizable discovery and join timeouts
-- **✅ Fallback Support**: Manual membership changes if auto-join fails
-- **✅ TOML Integration**: Peer configuration via `[[cluster.peer]]` arrays
+**Implemented Configuration Sections:**
+- 🖥️ **Node**: Basic node settings (ID, addresses, data directory)
+- 🌐 **Network**: Timeout and connection settings
+- 💾 **Storage**: Basic RocksDB configuration
+- 🗳️ **Raft**: Consensus timing parameters
+- 📊 **Logging**: Log level and format settings
+- 👥 **Cluster**: Peer configuration and auto-join settings
+- 🔒 **Security**: Configuration structure only (TLS not fully implemented)
 
 ### 🌐 **Dual-Protocol APIs**
-- **✅ HTTP REST API**: Human-friendly RESTful interface for web integration
-  - Health checks (`/health`) ✅
-  - Cluster management (`/init`, `/add-learner`, `/change-membership`) ✅
-  - Leadership tracking (`/leader`, `/is-leader`) ✅
-  - KV operations (`/write`, `/read`) ✅
-  - Metrics and monitoring (`/metrics`) ✅
-  - Internal Raft RPC (`/raft/append-entries`, `/raft/vote`, `/raft/install-snapshot`) ✅
+- **✅ HTTP REST API**: Basic functionality implemented
+  - Health checks (`/health`) 
+  - Cluster management (`/init`, `/add-learner`, `/change-membership`)
+  - Leadership tracking (`/leader`, `/is-leader`)
+  - KV operations (`/write`, `/read`)
+  - Basic metrics (`/metrics`)
+  - Internal Raft RPC endpoints
 
-- **✅ gRPC API**: High-performance binary protocol for service-to-service communication
-  - **KvService**: Key-value operations (Get, Set, Delete) ✅
-  - **ManagementService**: Cluster management and health ✅
-  - **RaftService**: Internal Raft consensus operations ✅
+- **✅ gRPC API**: Basic service definitions
+  - **KvService**: Basic key-value operations
+  - **ManagementService**: Cluster management endpoints
+  - **RaftService**: Internal Raft operations
 
-### 🚀 **Production-Ready Operations**
-- **✅ Performance Tuning**: Multiple configuration profiles (high-throughput, high-durability, low-latency)
-- **✅ Basic Security**: HTTPS URL support and TLS-ready configuration structure
-- **✅ Monitoring**: Rich metrics and structured logging with timestamps
-- **✅ Health Checks**: Comprehensive health and readiness endpoints
-- **✅ Deployment Ready**: Docker, Kubernetes, and systemd integration examples
+### 🧪 **Testing Status**
+- **✅ Unit Tests**: Comprehensive core functionality testing
+- **✅ Integration Tests**: Multi-node cluster scenarios working
+- **✅ 3-Node Cluster Testing**: Extensive automated testing with TLS/mTLS
+- **✅ Auto-join Testing**: Automatic cluster formation validated
+- **✅ TLS/mTLS Testing**: End-to-end encrypted communication testing
+- **✅ Real Process Testing**: Tests with actual ferrium-server processes
+- **⚠️ Load Testing**: Basic performance testing (comprehensive load testing needed)
+- **❌ Failure Recovery**: Limited network partition and failure testing
+- **❌ Long-running Stability**: No extended 24/7+ runtime testing
 
-### 🔧 **Advanced Technical Features**
-- **✅ Solved OpenRaft Challenges**:
-  - ✅ Sealed Traits → Comprehensive `TypeConfig` implementation
-  - ✅ Complex Generics → Simplified through well-defined type bounds
-  - ✅ Storage Abstraction → Clean RocksDB integration with proper error handling
-  - ✅ Network Layer → HTTP-based communication with automatic retries and smart URL handling
-  - ✅ Configuration → All Raft parameters tunable via config files
+## 🚧 **Known Limitations & TODOs**
 
-- **✅ Error Handling**: Comprehensive error handling with proper RPC error types
-- **✅ Storage Strategy**: Uses RocksDB with column families for logs, state, and snapshots
-- **✅ Network Strategy**: HTTP-based RPC with client tracking and leader detection
-- **✅ Type Safety**: Complete type configuration solving all openraft complexity
-- **✅ URL Management**: Smart HTTP/HTTPS URL construction preventing double-prefix bugs
+### **Security**
+- **✅ TLS Implementation**: Full TLS/HTTPS support with certificate validation
+- **✅ mTLS Support**: Mutual TLS with client certificate authentication
+- **✅ Certificate Management**: Certificate loading, parsing, and validation
+- **⚠️ Certificate Rotation**: Manual certificate updates (automatic rotation planned)
+- **❌ RBAC Authorization**: No role-based access control system
+- **❌ Token Authentication**: No JWT or API token support
 
-## 📊 **Successful Testing Results**
+### **Production Readiness**
+- **❌ Performance Testing**: No benchmarking or optimization
+- **❌ Memory Management**: No memory usage optimization
+- **❌ Resource Limits**: Basic resource management only
+- **❌ Monitoring**: Basic metrics only, no comprehensive monitoring
+- **❌ Backup/Restore**: No backup/restore functionality
+- **❌ Upgrade Path**: No rolling upgrade support
 
-### 🧪 **Comprehensive Auto-Join + Linearizability Test (PASSED)**
+### **Reliability**
+- **❌ Error Recovery**: Limited error handling and recovery
+- **❌ Network Partitions**: Not thoroughly tested
+- **❌ Split-brain Protection**: Basic implementation only
+- **❌ Data Validation**: Limited data integrity checking
+- **❌ Corruption Detection**: No automatic corruption detection
+
+### **Operations**
+- **❌ Production Deployment**: No production deployment guides
+- **❌ Scaling**: No guidance on cluster sizing
+- **❌ Troubleshooting**: Limited debugging tools
+- **❌ Log Management**: Basic logging only
+
+## 📊 **Comprehensive Testing Results**
+
+### 🧪 **Multi-Node Cluster Testing**
 ```
-🏠 Auto-Join Test Results:
-├── ✅ Node 1 (Leader): HTTP:21001, gRPC:31001 - Initialized as cluster leader
-├── ✅ Node 2 (Auto-joined): HTTP:21002, gRPC:31002 - Successfully discovered and joined
-└── ✅ Leadership Consensus: Both nodes agree on leader = 1
-
-🔧 Auto-Join Process Verified:
-├── ✅ Leader discovery: Node 2 found Node 1 automatically
-├── ✅ Join request: Node 2 requested to join as learner
-├── ✅ Auto-accept: Node 1 accepted Node 2 (trusted peer configuration)
-├── ✅ Cluster synchronization: Both nodes show membership [1,2]
-└── ✅ Promotion: Manual promotion to voting member completed
-
-📐 Linearizability Enforcement:
-├── ✅ Leader reads: Node 1 serves reads normally
-├── ✅ Follower protection: Node 2 correctly refuses direct reads
-├── ✅ Error guidance: "Failed to ensure linearizability: has to forward request to leader"
-└── ✅ Strong consistency: Prevents stale reads through leader-only reads
-
-🌐 API Protocols:
-├── ✅ HTTP REST API: Full functionality verified including Raft RPC endpoints
-└── ✅ gRPC API: Infrastructure confirmed and accessible
-
-📊 Performance Characteristics:
-├── ✅ Sub-second response times for all operations
-├── ✅ Proper Raft state transitions
-├── ✅ Efficient leader election (Term 1 stable)
-├── ✅ Auto-join completes within 15 seconds
-└── ✅ Strong consistency guarantees maintained
-```
-
-### 🧪 **3-Node Cluster Test with Auto-Join (PASSED)**
-```
-🏠 Full Cluster Test Results:
-├── Node 1 (Leader): HTTP:21001, gRPC:31001, Data:./test-cluster/data/node1
-├── Node 2 (Follower): HTTP:21002, gRPC:31002, Data:./test-cluster/data/node2
-└── Node 3 (Follower): HTTP:21003, gRPC:31003, Data:./test-cluster/data/node3
-
-🔧 Operations Tested:
-├── ✅ Automatic cluster formation (auto-join working)
-├── ✅ Member promotion (learners → voters)
-├── ✅ Leadership verification across all nodes
-├── ✅ Multiple distributed writes (no hanging issues)
-├── ✅ Consistency enforcement (linearizable reads)
-├── ✅ Health monitoring across cluster
-├── ✅ Performance test: 50 writes/second
-└── ✅ Metrics collection and reporting
-
-🌐 API Protocols:
-├── ✅ HTTP REST API: Full functionality verified
-└── ✅ gRPC API: Infrastructure confirmed and accessible on all nodes
-
-📊 Performance Results:
-├── ✅ ALL TESTS PASSED SUCCESSFULLY
-├── ✅ Sub-second response times for all operations
-├── ✅ Proper Raft state transitions
-├── ✅ Efficient leader election (Term 1 stable)
-└── ✅ Strong consistency guarantees maintained
+✅ Single Node: Full operations and configuration tested
+✅ 2-Node Cluster: Leader election and replication validated
+✅ 3-Node Cluster: Extensive automated testing (HTTP, TLS, mTLS)
+✅ Auto-join: Automatic cluster formation working reliably
+✅ TLS Encryption: End-to-end HTTPS communication tested
+✅ mTLS Authentication: Mutual certificate authentication working
+✅ Real Process Testing: Tests with actual ferrium-server binaries
+❌ Larger Clusters: 5+ node clusters not tested
+❌ Network Failures: Partition recovery not thoroughly tested
+❌ Extended Load: Long-running high-throughput testing needed
 ```
 
-### 🔧 **Configuration System Test (PASSED)**
-- ✅ Config file generation works
-- ✅ Config location discovery works
-- ✅ Config validation works
-- ✅ CLI overrides work properly
-- ✅ TOML array `[[cluster.peer]]` format works
-- ✅ Example configs are valid
-- ✅ Server runs with config files
-- ✅ Structured logging with timestamps works
+### 🔧 **Known Issues**
+- Auto-join reliability needs improvement
+- Error messages could be more helpful
+- Configuration validation is basic
+- Network error handling is minimal
+- Performance is not optimized
 
-### 🐛 **Critical Bug Fixes Applied**
-- ✅ **Double HTTP Prefix Bug**: Fixed URL construction preventing `http://http://` errors
-- ✅ **Auto-Join Address Configuration**: Proper HTTP vs gRPC port handling for Raft RPC
-- ✅ **Initialization Address Bug**: Use actual configured addresses instead of hardcoded values
-- ✅ **Network Design Clarification**: HTTP port for Raft RPC, gRPC port for service APIs
+## 🎯 **Current Development Status**
 
-## 🚀 **Quick Start Guide**
+### **Beta Stage (Current)**
+- ✅ Core Raft functionality stable and tested
+- ✅ Complete HTTP and gRPC APIs
+- ✅ Comprehensive configuration system
+- ✅ Automatic cluster formation working
+- ✅ Full TLS/mTLS security implementation
+- ✅ Extensive 3-node cluster testing
+- ✅ Real-world deployment configurations
 
-### 1. **Single Node Development**
+### **What's Needed for Production 1.0**
+- Extended stability and load testing
+- Network partition recovery testing
+- Performance benchmarking and optimization
+- Production deployment guides and best practices
+
+## 🏆 **Key Beta Achievements**
+
+### **🔐 Complete Security Stack**
+- **Full TLS/HTTPS Support**: All communications can be encrypted
+- **Mutual TLS (mTLS)**: Client certificate authentication working
+- **Certificate Management**: Loading, parsing, and validation implemented
+- **Both Protocols**: TLS support for both HTTP REST and gRPC APIs
+
+### **🧪 Comprehensive Testing**
+- **3-Node Cluster Tests**: Automated testing with real processes (`test-cluster.sh`)
+- **TLS/mTLS Integration Tests**: End-to-end encrypted communication testing
+- **Auto-join Validation**: Automatic cluster formation thoroughly tested
+- **CI/CD Integration**: TLS tests running in GitHub Actions workflows
+
+### **⚙️ Production-Ready Configuration**
+- **TOML Configuration System**: Comprehensive settings with validation
+- **TLS Configuration Examples**: Ready-to-use TLS deployment configs
+- **Docker & Kubernetes Support**: Container deployment examples provided
+- **Certificate Generation Scripts**: Automated certificate creation for testing
+
+### **What's Needed for Production**
+- Extended stability testing
+- Comprehensive monitoring
+- Backup/restore functionality
+- Security hardening
+- Performance benchmarking
+- Production deployment guides
+- 24/7 operational experience
+
+## 🚀 **Quick Start (Development Only)**
+
+### Single Node Testing
 ```bash
-# Generate configuration
+# Build the project
+cargo build --release
+
+# Generate basic config
 ./target/release/ferrium-server --generate-config ferrium.toml
 
-# Validate configuration
-./target/release/ferrium-server --config ferrium.toml --validate-config
-
-# Start single node
+# Start single node (development only)
 ./target/release/ferrium-server --config examples/configs/single-node.toml
 ```
 
-### 2. **Auto-Join 3-Node Cluster (Recommended)**
+### Basic Cluster Testing
 ```bash
-# Create configurations with peer lists
-./target/release/ferrium-server --generate-config node1.toml
-# Edit node1.toml to add [[cluster.peer]] entries for all nodes
-
-# Node 1 (First node - becomes leader)
-./target/release/ferrium-server --config node1.toml
+# Start first node
+./target/release/ferrium-server --config examples/configs/cluster-node1.toml
 curl -X POST http://127.0.0.1:21001/init
 
-# Nodes 2 & 3 (Auto-join automatically)
-./target/release/ferrium-server --config node2.toml  # Auto-joins Node 1
-./target/release/ferrium-server --config node3.toml  # Auto-joins Node 1
+# Start second node (will attempt auto-join)
+./target/release/ferrium-server --config examples/configs/cluster-node2.toml
 
-# Promote to voting members
-curl -X POST -H "Content-Type: application/json" -d '[1,2,3]' \
-  http://127.0.0.1:21001/change-membership
-
-# Test the cluster
-./scripts/test-cluster.sh --ci
-```
-
-### 3. **Using Both APIs**
-```bash
-# HTTP API
+# Test basic operations
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"Set":{"key":"test","value":"hello world"}}' \
+  -d '{"Set":{"key":"test","value":"hello"}}' \
   http://127.0.0.1:21001/write
-
-# gRPC API
-./target/release/grpc-client-test
 ```
+
+**⚠️ Warning: This is development/testing software only. Do not use in production.**
 
 ## 📁 **Project Structure**
 
 ```
 ferrium/
 ├── src/
-│   ├── bin/
-│   │   ├── main.rs              # Server binary with comprehensive config system + auto-join
-│   │   ├── grpc_test.rs         # gRPC API test server
-│   │   └── grpc_client_test.rs  # gRPC integration test client
-│   ├── config/mod.rs            # Comprehensive TOML configuration system
-│   ├── storage/mod.rs           # RocksDB storage implementation
-│   ├── network/mod.rs           # HTTP network + management API + auto-join logic
-│   └── grpc/                    # Complete gRPC implementation
-│       ├── mod.rs              # Protocol definitions
-│       └── services/           # Service implementations
-├── examples/configs/            # Production configuration examples
-│   ├── single-node.toml        # Development setup
-│   ├── cluster-node1.toml      # Production cluster node
-│   └── high-performance.toml   # Performance-optimized
+│   ├── bin/main.rs              # Main server binary
+│   ├── config/mod.rs            # Configuration system
+│   ├── storage/mod.rs           # RocksDB storage layer
+│   ├── network/mod.rs           # HTTP API and cluster management
+│   └── grpc/                    # gRPC service implementations
+├── examples/configs/            # Example configurations
 ├── proto/                       # Protocol buffer definitions
-├── scripts/
-│   └── test-cluster.sh         # Comprehensive cluster testing script
-├── CONFIG.md                   # Comprehensive configuration documentation
-└── README.md                   # Complete user guide
+├── tests/                       # Integration tests
+└── scripts/                     # Development scripts
 ```
 
-## 🏆 **Current Status: PRODUCTION READY**
+## 🔮 **Roadmap to Production**
 
-### ✅ **Completed Milestones**
-- **Phase 1**: Core Raft Implementation ✅
-- **Phase 2**: Storage & Persistence ✅
-- **Phase 3**: HTTP API & Cluster Management ✅
-- **Phase 4**: Configuration System ✅
-- **Phase 5**: gRPC API Implementation ✅
-- **Phase 6**: Production Features & Testing ✅
-- **Phase 7**: Documentation & Examples ✅
-- **Phase 8**: **Automatic Cluster Formation** ✅
+### **Phase 1: Stability (Current Focus)**
+- [ ] Comprehensive error handling
+- [ ] Extended multi-node testing
+- [ ] Memory and performance optimization
+- [ ] Better logging and debugging
 
-### 🎯 **Achievement Summary**
-1. **✅ All Original OpenRaft Challenges Solved**
-2. **✅ Production-Ready Configuration Management**
-3. **✅ Dual-Protocol Architecture (HTTP + gRPC)**
-4. **✅ Successful Multi-Node Cluster Testing**
-5. **✅ Enterprise Operations Features**
-6. **✅ Comprehensive Documentation**
-7. **✅ Fully Working Auto-Join Functionality**
-8. **✅ Linearizability Enforcement Verified**
+### **Phase 2: Security & Operations**
+- [ ] Full TLS implementation
+- [ ] Authentication and authorization
+- [ ] Monitoring and metrics
+- [ ] Backup/restore functionality
 
-## 🌟 **Key Differentiators**
+### **Phase 3: Production Hardening**
+- [ ] Load testing and benchmarking
+- [ ] Failure recovery testing
+- [ ] Production deployment guides
+- [ ] 24/7 operational procedures
 
-Ferrium now stands as a **complete alternative to etcd, Consul, and other distributed KV stores** with:
+### **Phase 4: Advanced Features**
+- [ ] Multi-region support
+- [ ] Performance optimizations
+- [ ] Advanced monitoring
+- [ ] Client libraries
 
-### **🔧 Configuration-First Architecture**
-- **Declarative Configuration**: Everything configurable via TOML files
-- **Environment Flexibility**: CLI overrides for deployment-specific values
-- **Validation-First**: Prevent runtime issues with comprehensive validation
-- **Auto-Join Ready**: TOML peer lists enable automatic cluster formation
+## ⚠️ **Usage Disclaimer**
 
-### **🌐 Protocol Flexibility**
-- **HTTP for Humans**: Web UIs, debugging, curl-friendly APIs
-- **gRPC for Services**: High-performance service mesh integration
-- **Smart URL Handling**: Proper HTTP/HTTPS protocol detection
+**Ferrium is currently beta software suitable for:**
+- Development and testing environments
+- Learning about distributed systems
+- Non-critical production workloads (with proper testing)
+- Proof of concept and prototype projects
+- Contributing to open source
+- Internal tools and services
+- Staging environments
 
-### **📊 Operational Excellence**
-- **Observability Built-in**: Metrics, health checks, structured logging
-- **Performance Tunable**: Multiple configuration profiles for different workloads
-- **Cloud-Native Ready**: Container and Kubernetes deployment examples
-- **Auto-Formation**: Nodes join clusters automatically with minimal configuration
+**Use with caution for:**
+- Mission-critical production workloads (needs extended testing)
+- High-availability systems requiring 99.9%+ uptime
+- Large-scale deployments (>5 nodes not extensively tested)
+- Financial or security-critical data (thorough security audit recommended)
 
-### **🛡️ Production Hardened**
-- **Security Foundation**: HTTPS support and TLS configuration structure (custom certificates planned)
-- **Resource Managed**: Configurable caches, buffers, and limits
-- **Failure Resilient**: Tested failure scenarios and recovery
-- **Consistency Guaranteed**: Linearizability enforced preventing stale reads
+**Ferrium should NOT be used for:**
+- Systems where data loss is catastrophic without backup/testing
+- Applications requiring sub-millisecond latency guarantees
+- Environments without proper monitoring and operational procedures
 
-## 🚀 **Ready for Production Use**
+## 🤝 **Contributing**
 
-Ferrium is now suitable for:
-- **🏢 Enterprise Deployments**: Configuration management, monitoring, compliance
-- **☁️ Cloud-Native Environments**: Kubernetes, service mesh, microservices with auto-join
-- **🔧 High-Performance Systems**: Tunable for throughput or latency requirements
-- **🌐 Web Applications**: REST API integration with modern web stacks
-- **📊 Data Platforms**: Reliable distributed state and coordination service
-- **🤖 Auto-Scaling**: Dynamic cluster formation with automatic peer discovery
+This project is in active development and welcomes contributions, especially in:
+- Testing and bug reports
+- Performance optimization
+- Security implementation
+- Documentation improvements
+- Production readiness features
 
-## 🔮 **Planned Enhancements**
-
-### **Security (In Progress)**
-- **Custom TLS Certificates**: Client certificate loading and validation
-- **Mutual TLS (mTLS)**: Full client certificate authentication
-- **Certificate Rotation**: Automatic certificate renewal support
-
-**Current Security Status:**
-- ✅ HTTPS URL support
-- ✅ TLS configuration structure
-- 🔧 Custom certificate loading (planned)
-- 🔧 mTLS client authentication (planned)
-
-**Status: 🎉 READY FOR PRODUCTION DEPLOYMENT 🎉**
-
-**Auto-join functionality makes Ferrium exceptionally easy to deploy and scale in production environments!**
+**Current Status: 🎯 Beta - Feature Complete, Ready for Production Evaluation 🎯**

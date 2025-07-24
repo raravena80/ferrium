@@ -1,4 +1,34 @@
-# Ferrium - Enterprise Distributed KV Storage with Raft Consensus
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo.svg">
+    <img src="docs/assets/logo.svg" alt="Ferrium Logo" width="400"/>
+  </picture>
+
+  <br/>
+
+  <strong>Enterprise Distributed KV Storage with Raft Consensus</strong>
+
+  <br/><br/>
+
+  <p>
+    <a href="#-features">Features</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-configuration-system">Configuration</a> •
+    <a href="#-api-reference">API</a> •
+    <a href="#-deployment-examples">Deploy</a> •
+    <a href="#-architecture">Architecture</a>
+  </p>
+
+  <p>
+    <img src="https://img.shields.io/badge/language-Rust-orange?style=flat-square&logo=rust" alt="Rust"/>
+    <img src="https://img.shields.io/badge/consensus-Raft-blue?style=flat-square" alt="Raft"/>
+    <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green?style=flat-square" alt="License"/>
+    <img src="https://img.shields.io/badge/status-Production%20Ready-success?style=flat-square" alt="Status"/>
+  </p>
+</div>
+
+---
 
 Ferrium is a production-ready distributed key-value storage system built in Rust using the [openraft](https://github.com/databendlabs/openraft) consensus library. It provides strong consistency guarantees similar to etcd or Consul, with comprehensive configuration management and dual-protocol support (HTTP + gRPC).
 
@@ -24,7 +54,7 @@ Ferrium is a production-ready distributed key-value storage system built in Rust
 - **Hot Configuration**: Runtime configuration updates (where applicable)
 
 ### 🚀 **Production-Ready Operations**
-- **Performance Tuning**: Optimized configurations for different workload patterns  
+- **Performance Tuning**: Optimized configurations for different workload patterns
 - **Security**: TLS/mTLS support with multiple authentication methods
 - **Monitoring**: Rich metrics and structured logging
 - **Health Checks**: Comprehensive health and readiness endpoints
@@ -80,7 +110,7 @@ Ferrium features a comprehensive configuration system supporting every aspect of
 # Generate default configuration
 ./target/release/ferrium-server --generate-config my-config.toml
 
-# Validate configuration before deployment  
+# Validate configuration before deployment
 ./target/release/ferrium-server --config my-config.toml --validate-config
 
 # Run with configuration and CLI overrides
@@ -102,7 +132,7 @@ The configuration covers all operational aspects:
 ### Example Configurations
 
 - **`examples/configs/single-node.toml`** - Development & testing
-- **`examples/configs/cluster-node1.toml`** - Production cluster setup  
+- **`examples/configs/cluster-node1.toml`** - Production cluster setup
 - **`examples/configs/high-performance.toml`** - Optimized for throughput
 
 📖 **See [CONFIG.md](CONFIG.md) for comprehensive configuration documentation**
@@ -121,7 +151,7 @@ curl -X POST -H "Content-Type: application/json" \
   -d '{"Set":{"key":"mykey","value":"myvalue"}}' \
   http://127.0.0.1:8001/write
 
-# Read a value  
+# Read a value
 curl -X POST -H "Content-Type: application/json" \
   -d '{"key":"mykey"}' \
   http://127.0.0.1:8001/read
@@ -210,7 +240,7 @@ data:
     http_addr = "0.0.0.0:8001"
     grpc_addr = "0.0.0.0:9001"
     data_dir = "/data"
-    
+
     [logging]
     level = "info"
     format = "json"
@@ -318,7 +348,7 @@ WantedBy=multi-user.target
 ### Key Design Features
 
 1. **🔧 Configuration-Driven**: Every aspect configurable via TOML files
-2. **🌐 Protocol Agnostic**: HTTP for humans, gRPC for services  
+2. **🌐 Protocol Agnostic**: HTTP for humans, gRPC for services
 3. **⚡ Performance Optimized**: Configurable caching, batching, compression
 4. **🛡️ Security First**: Built-in TLS, authentication, and authorization
 5. **🔍 Observability**: Rich metrics, structured logging, health checks
@@ -407,7 +437,7 @@ cargo test --test integration
 # Start 3-node cluster for testing
 ./scripts/dev-cluster.sh start
 
-# Run tests against cluster  
+# Run tests against cluster
 ./scripts/dev-cluster.sh test
 
 # Stop cluster
@@ -427,7 +457,7 @@ src/
 │   └── mod.rs              # TOML config, validation, CLI
 ├── storage/                 # Storage layer
 │   └── mod.rs              # RocksDB integration
-├── network/                 # Network & API layer  
+├── network/                 # Network & API layer
 │   ├── mod.rs              # HTTP network + management API
 │   └── client.rs           # HTTP client library
 └── grpc/                   # gRPC implementation
@@ -439,7 +469,7 @@ examples/
 │   ├── cluster-node1.toml  # Production cluster
 │   └── high-performance.toml # Performance-optimized
 proto/                       # Protocol buffer definitions
-├── kv.proto                # KV service definitions  
+├── kv.proto                # KV service definitions
 ├── management.proto        # Management service
 └── raft.proto             # Raft internal protocols
 ```
@@ -461,7 +491,7 @@ curl http://127.0.0.1:8003/health
 
 **Configuration errors:**
 ```bash
-# Validate your configuration  
+# Validate your configuration
 ferrium-server --config my-config.toml --validate-config
 
 # Check configuration locations
@@ -507,7 +537,7 @@ ferrium-server --config production.toml --log-level debug --format json
   - [ ] Cross-datacenter replication
   - [ ] Built-in backup/restore
 
-- [ ] **Operations & Monitoring**  
+- [ ] **Operations & Monitoring**
   - [ ] Prometheus metrics export
   - [ ] Grafana dashboards
   - [ ] Alert manager integration
@@ -545,6 +575,29 @@ cargo install cargo-nextest
 cargo watch -x "nextest run"
 ```
 
+## 🎨 Logo & Branding
+
+The Ferrium logo is available in multiple formats for different use cases:
+
+- **`docs/assets/logo.svg`** - Main logo for light backgrounds (README, documentation)
+- **`docs/assets/logo-dark.svg`** - Optimized version for dark themes and backgrounds
+- **`docs/assets/logo-icon.svg`** - Compact icon version for favicons and small displays
+
+### Usage Guidelines
+
+```html
+<!-- For websites and documentation -->
+<img src="docs/assets/logo.svg" alt="Ferrium" width="400"/>
+
+<!-- For dark themes -->
+<img src="docs/assets/logo-dark.svg" alt="Ferrium" width="400"/>
+
+<!-- For favicons (convert to PNG/ICO as needed) -->
+<img src="docs/assets/logo-icon.svg" alt="Ferrium" width="32"/>
+```
+
+The logo combines the iron/metal theme (Ferrium = iron) with distributed systems concepts, featuring connected nodes and modern gradients that represent the robust, interconnected nature of the system. The subtitle uses high-contrast colors to ensure readability against the metal accent elements.
+
 ## 📄 License
 
 This project is licensed under the MIT OR Apache-2.0 license.
@@ -552,7 +605,7 @@ This project is licensed under the MIT OR Apache-2.0 license.
 ## 🙏 Acknowledgments
 
 - **[openraft](https://github.com/databendlabs/openraft)** - Robust Raft consensus implementation
-- **[RocksDB](https://rocksdb.org/)** - High-performance storage engine  
+- **[RocksDB](https://rocksdb.org/)** - High-performance storage engine
 - **[tokio](https://tokio.rs/)** - Async runtime for Rust
 - **[actix-web](https://actix.rs/)** - Fast HTTP framework
 - **[tonic](https://github.com/hyperium/tonic)** - gRPC implementation

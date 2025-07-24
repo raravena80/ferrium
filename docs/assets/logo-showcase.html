@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferrium Logo Showcase</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 60px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .logo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .logo-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .logo-card h3 {
+            margin: 0 0 20px 0;
+            color: #334155;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .logo-card p {
+            color: #64748b;
+            margin: 20px 0 0 0;
+            font-size: 0.9rem;
+        }
+
+        .dark-demo {
+            background: #1e293b;
+            color: white;
+        }
+
+        .dark-demo h3 {
+            color: #f1f5f9;
+        }
+
+        .dark-demo p {
+            color: #94a3b8;
+        }
+
+        .icon-demo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .usage-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .usage-section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        code {
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Ferrium Logo Showcase</h1>
+
+        <div class="showcase-grid">
+            <!-- Main Logo -->
+            <div class="logo-card">
+                <h3>Main Logo (Light Theme)</h3>
+                <img src="logo.svg" alt="Ferrium Logo" style="width: 100%; max-width: 400px;">
+                <p>Primary logo for light backgrounds, documentation, and general use</p>
+            </div>
+
+            <!-- Dark Theme Logo -->
+            <div class="logo-card dark-demo">
+                <h3>Dark Theme Logo</h3>
+                <img src="logo-dark.svg" alt="Ferrium Dark Logo" style="width: 100%; max-width: 400px;">
+                <p>Optimized for dark backgrounds and dark mode interfaces</p>
+            </div>
+
+            <!-- Icon Versions -->
+            <div class="logo-card">
+                <h3>Icon Version</h3>
+                <div class="icon-demo">
+                    <img src="logo-icon.svg" alt="Ferrium Icon" style="width: 32px; height: 32px;">
+                    <img src="logo-icon.svg" alt="Ferrium Icon" style="width: 64px; height: 64px;">
+                    <img src="logo-icon.svg" alt="Ferrium Icon" style="width: 128px; height: 128px;">
+                </div>
+                <p>Compact icon for favicons, app icons, and small displays (32px, 64px, 128px)</p>
+            </div>
+        </div>
+
+        <div class="usage-section">
+            <h2>📋 Usage Guidelines</h2>
+
+            <h3>HTML Implementation</h3>
+            <pre><code>&lt;!-- Responsive logo that adapts to theme --&gt;
+&lt;picture&gt;
+  &lt;source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg"&gt;
+  &lt;source media="(prefers-color-scheme: light)" srcset="logo.svg"&gt;
+  &lt;img src="logo.svg" alt="Ferrium" width="400"/&gt;
+&lt;/picture&gt;
+
+&lt;!-- For favicons (convert to PNG/ICO) --&gt;
+&lt;link rel="icon" type="image/svg+xml" href="logo-icon.svg"&gt;</code></pre>
+
+            <h3>Markdown (GitHub README)</h3>
+            <pre><code>&lt;div align="center"&gt;
+  &lt;picture&gt;
+    &lt;source media="(prefers-color-scheme: dark)" srcset="logo-dark.svg"&gt;
+    &lt;source media="(prefers-color-scheme: light)" srcset="logo.svg"&gt;
+    &lt;img src="logo.svg" alt="Ferrium Logo" width="400"/&gt;
+  &lt;/picture&gt;
+&lt;/div&gt;</code></pre>
+
+                         <h3>🎨 Design Elements</h3>
+             <ul>
+                 <li><strong>Color Palette:</strong> Purple to pink gradient (#4F46E5 → #7C3AED → #DB2777)</li>
+                 <li><strong>Metal Accents:</strong> Gray gradient representing iron/steel (#71717A → #A1A1AA)</li>
+                 <li><strong>Network Nodes:</strong> Connected circles representing distributed systems</li>
+                 <li><strong>Typography:</strong> Modern sans-serif with dark subtitle for contrast (#1E293B light / #E2E8F0 dark)</li>
+                 <li><strong>Theme:</strong> Combines iron/metal (Ferrium = Latin for iron) with tech/network concepts</li>
+             </ul>
+
+            <h3>✅ Do's</h3>
+            <ul>
+                <li>Use the appropriate version for your background (light/dark)</li>
+                <li>Maintain aspect ratio when scaling</li>
+                <li>Provide adequate white space around the logo</li>
+                <li>Use the icon version for small displays (≤64px)</li>
+            </ul>
+
+            <h3>❌ Don'ts</h3>
+            <ul>
+                <li>Don't modify colors or gradients</li>
+                <li>Don't stretch or distort the logo</li>
+                <li>Don't use on backgrounds that clash with the color scheme</li>
+                <li>Don't remove or modify the distributed network elements</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

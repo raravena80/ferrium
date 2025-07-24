@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for the main elements -->
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7C3AED;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#DB2777;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Metal accent gradient -->
+    <linearGradient id="metalIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#71717A;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A1A1AA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#52525B;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Glow effect -->
+    <filter id="iconGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="2" opacity="0.1"/>
+
+  <!-- Central "F" letterform with geometric design -->
+  <g transform="translate(64, 64)">
+    <!-- Main F structure -->
+    <rect x="-20" y="-25" width="8" height="50" fill="url(#iconGradient)" rx="2"/>
+    <rect x="-20" y="-25" width="25" height="8" fill="url(#iconGradient)" rx="2"/>
+    <rect x="-20" y="-5" width="20" height="6" fill="url(#iconGradient)" rx="1"/>
+
+    <!-- Network nodes integrated into the F -->
+    <circle cx="-15" cy="-20" r="3" fill="#4F46E5" filter="url(#iconGlow)"/>
+    <circle cx="0" cy="-20" r="4" fill="#7C3AED" filter="url(#iconGlow)"/>
+    <circle cx="-10" cy="0" r="3" fill="#DB2777" filter="url(#iconGlow)"/>
+    <circle cx="10" cy="15" r="3" fill="#4F46E5" filter="url(#iconGlow)"/>
+
+    <!-- Connection lines -->
+    <line x1="-15" y1="-20" x2="0" y2="-20" stroke="#4F46E5" stroke-width="1.5" opacity="0.6"/>
+    <line x1="-10" y1="0" x2="10" y2="15" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
+    <line x1="0" y1="-20" x2="10" y2="15" stroke="#DB2777" stroke-width="1" opacity="0.4"/>
+  </g>
+
+  <!-- Iron/metal accent -->
+  <g transform="translate(85, 25)">
+    <polygon points="0,0 12,0 15,8 8,16 -2,16 -5,8" fill="url(#metalIconGradient)" opacity="0.8"/>
+  </g>
+
+  <!-- Bottom accent -->
+  <rect x="30" y="100" width="68" height="2" fill="url(#iconGradient)" opacity="0.6" rx="1"/>
+</svg>

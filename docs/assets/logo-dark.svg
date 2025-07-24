@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="120" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for the main text (brighter for dark theme) -->
+    <linearGradient id="textGradientDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Gradient for the iron/metal accent (lighter for dark theme) -->
+    <linearGradient id="metalGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9CA3AF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#D1D5DB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6B7280;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Glow effect for nodes -->
+    <filter id="glowDark">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background (transparent) -->
+  <rect width="400" height="120" fill="none"/>
+
+  <!-- Distributed network nodes and connections -->
+  <g opacity="0.9">
+    <!-- Connection lines (brighter for dark theme) -->
+    <line x1="30" y1="30" x2="80" y2="50" stroke="#6366F1" stroke-width="2" opacity="0.8"/>
+    <line x1="80" y1="50" x2="130" y2="35" stroke="#6366F1" stroke-width="2" opacity="0.8"/>
+    <line x1="30" y1="30" x2="130" y2="35" stroke="#6366F1" stroke-width="2" opacity="0.6"/>
+    <line x1="80" y1="50" x2="100" y2="85" stroke="#8B5CF6" stroke-width="2" opacity="0.8"/>
+    <line x1="130" y1="35" x2="100" y2="85" stroke="#8B5CF6" stroke-width="2" opacity="0.6"/>
+
+    <!-- Network nodes (brighter) -->
+    <circle cx="30" cy="30" r="6" fill="#6366F1" filter="url(#glowDark)"/>
+    <circle cx="80" cy="50" r="8" fill="#8B5CF6" filter="url(#glowDark)"/>
+    <circle cx="130" cy="35" r="6" fill="#6366F1" filter="url(#glowDark)"/>
+    <circle cx="100" cy="85" r="7" fill="#EC4899" filter="url(#glowDark)"/>
+  </g>
+
+  <!-- Iron/Metal geometric accent -->
+  <g transform="translate(340, 20)">
+    <polygon points="0,0 30,0 35,15 25,30 5,30 0,15" fill="url(#metalGradientDark)" opacity="0.8"/>
+    <polygon points="5,35 25,35 30,50 20,65 0,65 -5,50" fill="url(#metalGradientDark)" opacity="0.6"/>
+  </g>
+
+  <!-- Main title -->
+  <text x="160" y="45" font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="36" font-weight="700" fill="url(#textGradientDark)">
+    Ferrium
+  </text>
+
+  <!-- Subtitle with lighter color for dark theme contrast -->
+  <text x="160" y="70" font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+        font-size="14" font-weight="400" fill="#E2E8F0">
+    Distributed KV Storage System
+  </text>
+
+  <!-- Tech accent line -->
+  <rect x="160" y="80" width="150" height="2" fill="url(#textGradientDark)" opacity="0.7"/>
+
+  <!-- Version badge style element -->
+  <g transform="translate(160, 90)">
+    <rect x="0" y="0" width="60" height="18" rx="9" fill="#374151" opacity="0.3"/>
+    <text x="30" y="12" font-family="'SF Mono', 'Monaco', 'Cascadia Code', monospace"
+          font-size="10" font-weight="500" fill="#D1D5DB" text-anchor="middle">
+      Rust + Raft
+    </text>
+  </g>
+</svg>

@@ -51,26 +51,37 @@ jobs:
       shell: bash
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "ref=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          echo "Checking out tag: ${{ inputs.version }}"
+          VERSION="${{ inputs.version }}"
+          echo "ref=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📋 Manual trigger - using version: ${VERSION}"
+          echo "🔗 Will checkout tag: ${VERSION}"
         else
+          VERSION="${GITHUB_REF#refs/tags/}"
           echo "ref=${GITHUB_REF}" >> $GITHUB_OUTPUT
-          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          echo "Checking out ref: ${GITHUB_REF}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📋 Tag push - detected version: ${VERSION}"
+          echo "🔗 Will checkout ref: ${GITHUB_REF}"
         fi
-
+        # Validate version format
+        if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          echo "✅ Version format looks correct: ${VERSION}"
+        else
+          echo "⚠️  Version format may be incorrect: ${VERSION}"
+          echo "   Expected format: v1.2.3 or v1.2.3-beta1"
+        fi
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
-
     - name: Get version
       id: get_version
       shell: bash
       run: |
-        echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
-
+        VERSION="${{ steps.checkout_ref.outputs.version }}"
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "🏷️  Release version: ${VERSION}"
+        echo "🔗 Expected release URL: https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
@@ -106,6 +117,14 @@ jobs:
         else
           mv target/${{ matrix.target }}/release/ferrium-server ${{ matrix.artifact-name }}
         fi
+    - name: Debug release information
+      shell: bash
+      run: |
+        echo "🔍 Debug information:"
+        echo "  Event: ${{ github.event_name }}"
+        echo "  Ref: ${{ github.ref }}"
+        echo "  Version: ${{ steps.get_version.outputs.version }}"
+        echo "  Artifact: ${{ matrix.artifact-name }}"
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v2
       with:
@@ -134,6 +153,26 @@ jobs:
           See the [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
         files: ${{ matrix.artifact-name }}
         prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
+        make_latest: false
+        fail_on_unmatched_files: true
+        generate_release_notes: false
+    - name: Verify release creation
+      shell: bash
+      run: |
+        VERSION="${{ steps.get_version.outputs.version }}"
+        echo "🔍 Verifying release was created correctly..."
+        echo "Expected URL: https://github.com/${{ github.repository }}/releases/tag/${VERSION}"
+        # Check if release exists with curl
+        if curl -s -f -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+           "https://api.github.com/repos/${{ github.repository }}/releases/tags/${VERSION}" > /dev/null; then
+          echo "✅ Release found at correct tag: ${VERSION}"
+        else
+          echo "❌ Release not found at expected tag: ${VERSION}"
+          echo "🔍 Listing recent releases:"
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               "https://api.github.com/repos/${{ github.repository }}/releases?per_page=5" | \
+            jq -r '.[] | "  - \(.name) (tag: \(.tag_name), url: \(.html_url))"'
+        fi
   publish-crate:
     name: Publish to crates.io
     runs-on: ubuntu-latest
@@ -151,24 +190,21 @@ jobs:
           echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           echo "Checking out ref: ${GITHUB_REF}"
         fi
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
-
     - name: Get version
       id: get_version
       shell: bash
       run: |
         echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
-
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
-    - name: Install protoc
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y protobuf-compiler
+        sudo apt-get install -y protobuf-compiler openssl
     - name: Verify version matches Cargo.toml
       shell: bash
       run: |
@@ -223,20 +259,28 @@ jobs:
           echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           echo "Checking out ref: ${GITHUB_REF}"
         fi
-
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
-
     - name: Get version
       id: get_version
       shell: bash
       run: |
         echo "version=${{ steps.checkout_ref.outputs.version }}" >> $GITHUB_OUTPUT
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        platforms: linux/amd64,linux/arm64
+    - name: Verify target platform
+      shell: bash
+      run: |
+        echo "🎯 Building for platform: ${{ matrix.platform }}"
+        echo "🏗️  Target architecture: ${{ matrix.arch }}"
+        echo "🖥️  Runner architecture: $(uname -m)"
+        if [ "${{ matrix.platform }}" = "linux/arm64" ]; then
+          echo "⚠️  Note: ARM64 build will use cross-compilation/emulation on x86_64 runner"
+        fi
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -268,6 +312,24 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha,scope=${{ matrix.arch }}
         cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+        # Enable provenance for multi-arch verification
+        provenance: true
+        sbom: true
+    - name: Verify image architecture
+      shell: bash
+      run: |
+        echo "🔍 Verifying image architecture for ${{ matrix.platform }}..."
+        # Extract the main tag (first one)
+        MAIN_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "📦 Inspecting image: $MAIN_TAG"
+        # Use docker buildx imagetools to inspect the image
+        docker buildx imagetools inspect $MAIN_TAG --format '{{json .}}' | jq '.manifests[] | {platform: .platform, digest: .digest}' || true
+        # Alternative verification using crane (if available)
+        if command -v crane &> /dev/null; then
+          echo "🏗️  Using crane to verify architecture:"
+          crane manifest $MAIN_TAG | jq -r '.architecture // .manifests[].platform.architecture' || true
+        fi
+        echo "✅ Image built and pushed for ${{ matrix.platform }}"
   docker-manifest:
     name: Create Multi-Arch Manifest
     runs-on: ubuntu-latest
@@ -304,4 +366,21 @@ jobs:
           docker buildx imagetools create -t ghcr.io/${REPO_NAME}:latest \
             ghcr.io/${REPO_NAME}:latest-amd64 \
             ghcr.io/${REPO_NAME}:latest-arm64
+        fi
+    - name: Verify multi-arch manifest
+      shell: bash
+      run: |
+        # Extract repository name
+        REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        echo "🔍 Verifying multi-arch manifest..."
+        # Inspect the multi-arch manifest
+        echo "📦 Inspecting ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }}"
+        docker buildx imagetools inspect ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }} --format '{{json .}}' | jq '.manifests[] | {platform: .platform, digest: .digest}'
+        # Count architectures
+        ARCH_COUNT=$(docker buildx imagetools inspect ghcr.io/${REPO_NAME}:${{ steps.get_version.outputs.version }} --format '{{json .}}' | jq '.manifests | length')
+        echo "🏗️  Multi-arch manifest contains $ARCH_COUNT architecture(s)"
+        if [ "$ARCH_COUNT" -eq 2 ]; then
+          echo "✅ Multi-arch manifest successfully created with both AMD64 and ARM64!"
+        else
+          echo "⚠️  Expected 2 architectures, found $ARCH_COUNT"
         fi

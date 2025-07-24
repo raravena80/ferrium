@@ -15,6 +15,17 @@ struct TlsCertificateTestSetup {
 
 impl TlsCertificateTestSetup {
     pub fn new() -> std::io::Result<Self> {
+        // Check if OpenSSL is available - fail fast with clear error
+        if std::process::Command::new("openssl")
+            .arg("version")
+            .output()
+            .is_err()
+        {
+            panic!(
+                "❌ OpenSSL is required for TLS tests but was not found. Please install OpenSSL."
+            );
+        }
+
         let temp_dir = tempfile::tempdir()?;
         let temp_path = temp_dir.path();
 
@@ -30,9 +41,10 @@ impl TlsCertificateTestSetup {
         // Generate CA private key
         std::process::Command::new("openssl")
             .args(["genrsa", "-out", ca_key_path.to_str().unwrap(), "2048"])
-            .output()?;
+            .output()
+            .expect("Failed to generate CA private key");
 
-        // Generate CA certificate
+        // Generate CA certificate with X.509 v3 extensions
         std::process::Command::new("openssl")
             .args([
                 "req",
@@ -48,12 +60,14 @@ impl TlsCertificateTestSetup {
                 "-out",
                 ca_cert_path.to_str().unwrap(),
             ])
-            .output()?;
+            .output()
+            .expect("Failed to generate CA certificate");
 
         // Generate server private key
         std::process::Command::new("openssl")
             .args(["genrsa", "-out", server_key_path.to_str().unwrap(), "2048"])
-            .output()?;
+            .output()
+            .expect("Failed to generate server private key");
 
         // Generate server certificate signing request
         let server_csr_path = temp_path.join("server.csr");
@@ -68,9 +82,27 @@ impl TlsCertificateTestSetup {
                 "-out",
                 server_csr_path.to_str().unwrap(),
             ])
-            .output()?;
+            .output()
+            .expect("Failed to generate server certificate signing request");
 
-        // Sign server certificate with CA
+        // Create a config file for X.509 v3 extensions
+        let server_ext_path = temp_path.join("server.ext");
+        std::fs::write(
+            &server_ext_path,
+            "authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = localhost
+DNS.2 = *.localhost
+IP.1 = 127.0.0.1
+IP.2 = ::1
+",
+        )?;
+
+        // Sign server certificate with CA using X.509 v3 extensions
         std::process::Command::new("openssl")
             .args([
                 "x509",
@@ -87,8 +119,11 @@ impl TlsCertificateTestSetup {
                 "-days",
                 "365",
                 "-sha256",
+                "-extfile",
+                server_ext_path.to_str().unwrap(),
             ])
-            .output()?;
+            .output()
+            .expect("Failed to sign server certificate");
 
         Ok(TlsCertificateTestSetup {
             _temp_dir: temp_dir,

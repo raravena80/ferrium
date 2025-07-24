@@ -519,7 +519,7 @@ pub fn validate_tls_config(security: &SecurityConfig) -> Result<(), TlsError> {
 
 /// Create a self-signed certificate for testing (DO NOT use in production)
 /// Note: This function is currently disabled due to rcgen API compatibility issues
-#[cfg(all(feature = "test-certs", not(any())))]
+#[cfg(not(any()))] // Permanently disabled
 #[allow(dead_code)]
 pub fn generate_self_signed_cert(
     _subject_name: &str,
@@ -537,8 +537,7 @@ mod tests {
     use tempfile::NamedTempFile;
 
     /// Test utilities for creating certificates and keys
-    /// Note: Disabled due to rcgen API compatibility issues  
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[allow(clippy::field_reassign_with_default)]
     mod test_utils {
         use super::*;
@@ -649,7 +648,7 @@ mod tests {
         assert!(result.unwrap_err().to_string().contains("does not exist"));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_tls_config_validation_with_real_files() {
         let (ca, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -676,7 +675,7 @@ mod tests {
         assert!(validate_tls_config(&security).is_err());
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_certificate_loading() {
         let (_, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -688,7 +687,7 @@ mod tests {
         assert_eq!(certificates.len(), 1);
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_private_key_loading() {
         let (_, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -735,7 +734,7 @@ mod tests {
         assert!(matches!(result.unwrap_err(), TlsError::CertificateParse(_)));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_tls_config_creation() {
         let (ca, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -758,7 +757,7 @@ mod tests {
         // Note: Certificates loaded successfully (ca_certificates field was removed in newer versions)
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_client_tls_config_creation() {
         let (ca, _, client_cert) = test_utils::create_test_certificates().unwrap();
@@ -784,9 +783,14 @@ mod tests {
         assert!(client_config.client_key.is_some());
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_rustls_server_config_creation() {
+        // Install default crypto provider for rustls
+        rustls::crypto::aws_lc_rs::default_provider()
+            .install_default()
+            .ok(); // Ignore error if already installed
+
         let (ca, server_cert, _) = test_utils::create_test_certificates().unwrap();
 
         let cert_file = test_utils::write_temp_file(&server_cert.cert_pem).unwrap();
@@ -808,9 +812,14 @@ mod tests {
         assert!(!std::ptr::eq(rustls_config.as_ref(), std::ptr::null()));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_rustls_client_config_creation() {
+        // Install default crypto provider for rustls
+        rustls::crypto::aws_lc_rs::default_provider()
+            .install_default()
+            .ok(); // Ignore error if already installed
+
         let (ca, _, client_cert) = test_utils::create_test_certificates().unwrap();
 
         let cert_file = test_utils::write_temp_file(&client_cert.cert_pem).unwrap();
@@ -834,7 +843,7 @@ mod tests {
         assert!(!std::ptr::eq(rustls_config.as_ref(), std::ptr::null()));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_tonic_server_config_creation() {
         let (ca, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -857,7 +866,7 @@ mod tests {
         drop(tonic_config); // Just verify it was created successfully
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_tonic_client_config_creation() {
         let (ca, _, client_cert) = test_utils::create_test_certificates().unwrap();
@@ -895,7 +904,7 @@ mod tests {
         assert!(pem.contains("MIIBIg=="));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_private_key_der_to_pem_conversion() {
         let (_, server_cert, _) = test_utils::create_test_certificates().unwrap();
@@ -905,8 +914,9 @@ mod tests {
 
         let pem = private_key_der_to_pem(&private_key).unwrap();
         assert!(pem.starts_with("-----BEGIN "));
-        assert!(pem.ends_with("-----END "));
+        assert!(pem.ends_with("-----")); // Fixed: PEM ends with "-----", not "-----END "
         assert!(pem.contains("PRIVATE KEY"));
+        assert!(pem.contains("-----END "));
     }
 
     #[test]
@@ -927,7 +937,7 @@ mod tests {
         assert!(format!("{error}").contains("I/O error"));
     }
 
-    #[cfg(all(feature = "test-certs", not(any())))]
+    #[cfg(feature = "test-certs")]
     #[test]
     fn test_tls_config_clone() {
         let (_, server_cert, _) = test_utils::create_test_certificates().unwrap();

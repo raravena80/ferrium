@@ -22,7 +22,7 @@ RUN rustup component add rustfmt clippy
 
 # Set up cross-compilation for ARM64 if needed
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    apt-get update && apt-get install -y gcc-aarch64-linux-gnu && \
+    apt-get update && apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu && \
     rustup target add aarch64-unknown-linux-gnu && \
     rm -rf /var/lib/apt/lists/*; \
 fi

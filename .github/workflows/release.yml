@@ -228,13 +228,29 @@ jobs:
       run: |
         echo "Cleaning up untracked files and directories..."
         rm -rf test-*
+
+    - name: Check if version exists on crates.io
+      id: check_version
+      shell: bash
+      run: |
+        VERSION="${{ steps.get_version.outputs.version }}"
+        if curl -s "https://crates.io/api/v1/crates/ferrium/$VERSION" | grep -q "Not Found"; then
+          echo "version_exists=false" >> $GITHUB_OUTPUT
+          echo "Version $VERSION does not exist, will publish"
+        else
+          echo "version_exists=true" >> $GITHUB_OUTPUT
+          echo "Version $VERSION already exists, skipping publish"
+        fi
+
     - name: Publish to crates.io
+      if: steps.check_version.outputs.version_exists == 'false'
       shell: bash
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       run: |
         echo "Publishing ferrium ${{ steps.get_version.outputs.version }} to crates.io..."
         cargo publish --token $CARGO_REGISTRY_TOKEN
+
   docker-build:
     name: Docker Build (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}

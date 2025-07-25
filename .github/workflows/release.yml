@@ -224,6 +224,10 @@ jobs:
       run: |
         cargo build --release
         cargo test
+    - name: Clean workspace
+      run: |
+        echo "Cleaning up untracked files and directories..."
+        rm -rf test-*
     - name: Publish to crates.io
       shell: bash
       env:

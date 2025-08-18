@@ -71,7 +71,7 @@ jobs:
           echo "   Expected format: v1.2.3 or v1.2.3-beta1"
         fi
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
     - name: Get version
@@ -191,7 +191,7 @@ jobs:
           echo "Checking out ref: ${GITHUB_REF}"
         fi
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
     - name: Get version
@@ -280,7 +280,7 @@ jobs:
           echo "Checking out ref: ${GITHUB_REF}"
         fi
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ steps.checkout_ref.outputs.ref }}
     - name: Get version

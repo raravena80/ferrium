@@ -125,10 +125,10 @@ pub mod management_service_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     /// Management Service for cluster operations
     #[derive(Debug, Clone)]
     pub struct ManagementServiceClient<T> {
@@ -173,9 +173,8 @@ pub mod management_service_client {
                     <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             ManagementServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -214,111 +213,79 @@ pub mod management_service_client {
         pub async fn initialize(
             &mut self,
             request: impl tonic::IntoRequest<super::InitializeRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::InitializeResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::InitializeResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/Initialize",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("ferrium.management.ManagementService", "Initialize"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "Initialize",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /// Add a learner node to the cluster
         pub async fn add_learner(
             &mut self,
             request: impl tonic::IntoRequest<super::AddLearnerRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::AddLearnerResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::AddLearnerResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/AddLearner",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("ferrium.management.ManagementService", "AddLearner"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "AddLearner",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /// Change cluster membership
         pub async fn change_membership(
             &mut self,
             request: impl tonic::IntoRequest<super::ChangeMembershipRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ChangeMembershipResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ChangeMembershipResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/ChangeMembership",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "ferrium.management.ManagementService",
-                        "ChangeMembership",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "ChangeMembership",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /// Get cluster metrics
         pub async fn get_metrics(
             &mut self,
             request: impl tonic::IntoRequest<super::MetricsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::MetricsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::MetricsResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/GetMetrics",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("ferrium.management.ManagementService", "GetMetrics"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "GetMetrics",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /// Health check
@@ -326,26 +293,18 @@ pub mod management_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::HealthRequest>,
         ) -> std::result::Result<tonic::Response<super::HealthResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/HealthCheck",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "ferrium.management.ManagementService",
-                        "HealthCheck",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "HealthCheck",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /// Get cluster leader information
@@ -353,23 +312,18 @@ pub mod management_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::LeaderRequest>,
         ) -> std::result::Result<tonic::Response<super::LeaderResponse>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/ferrium.management.ManagementService/GetLeader",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("ferrium.management.ManagementService", "GetLeader"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "ferrium.management.ManagementService",
+                "GetLeader",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -381,7 +335,7 @@ pub mod management_service_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with ManagementServiceServer.
@@ -391,26 +345,17 @@ pub mod management_service_server {
         async fn initialize(
             &self,
             request: tonic::Request<super::InitializeRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::InitializeResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::InitializeResponse>, tonic::Status>;
         /// Add a learner node to the cluster
         async fn add_learner(
             &self,
             request: tonic::Request<super::AddLearnerRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::AddLearnerResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::AddLearnerResponse>, tonic::Status>;
         /// Change cluster membership
         async fn change_membership(
             &self,
             request: tonic::Request<super::ChangeMembershipRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ChangeMembershipResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ChangeMembershipResponse>, tonic::Status>;
         /// Get cluster metrics
         async fn get_metrics(
             &self,
@@ -449,10 +394,7 @@ pub mod management_service_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -507,15 +449,11 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/Initialize" => {
                     #[allow(non_camel_case_types)]
                     struct InitializeSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::InitializeRequest>
-                    for InitializeSvc<T> {
+                    impl<T: ManagementService> tonic::server::UnaryService<super::InitializeRequest>
+                        for InitializeSvc<T>
+                    {
                         type Response = super::InitializeResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::InitializeRequest>,
@@ -552,15 +490,11 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/AddLearner" => {
                     #[allow(non_camel_case_types)]
                     struct AddLearnerSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::AddLearnerRequest>
-                    for AddLearnerSvc<T> {
+                    impl<T: ManagementService> tonic::server::UnaryService<super::AddLearnerRequest>
+                        for AddLearnerSvc<T>
+                    {
                         type Response = super::AddLearnerResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::AddLearnerRequest>,
@@ -597,23 +531,19 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/ChangeMembership" => {
                     #[allow(non_camel_case_types)]
                     struct ChangeMembershipSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::ChangeMembershipRequest>
-                    for ChangeMembershipSvc<T> {
+                    impl<T: ManagementService>
+                        tonic::server::UnaryService<super::ChangeMembershipRequest>
+                        for ChangeMembershipSvc<T>
+                    {
                         type Response = super::ChangeMembershipResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ChangeMembershipRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ManagementService>::change_membership(&inner, request)
-                                    .await
+                                <T as ManagementService>::change_membership(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -643,15 +573,9 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/GetMetrics" => {
                     #[allow(non_camel_case_types)]
                     struct GetMetricsSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::MetricsRequest>
-                    for GetMetricsSvc<T> {
+                    impl<T: ManagementService> tonic::server::UnaryService<super::MetricsRequest> for GetMetricsSvc<T> {
                         type Response = super::MetricsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::MetricsRequest>,
@@ -688,23 +612,16 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/HealthCheck" => {
                     #[allow(non_camel_case_types)]
                     struct HealthCheckSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::HealthRequest>
-                    for HealthCheckSvc<T> {
+                    impl<T: ManagementService> tonic::server::UnaryService<super::HealthRequest> for HealthCheckSvc<T> {
                         type Response = super::HealthResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::HealthRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ManagementService>::health_check(&inner, request)
-                                    .await
+                                <T as ManagementService>::health_check(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -734,15 +651,9 @@ pub mod management_service_server {
                 "/ferrium.management.ManagementService/GetLeader" => {
                     #[allow(non_camel_case_types)]
                     struct GetLeaderSvc<T: ManagementService>(pub Arc<T>);
-                    impl<
-                        T: ManagementService,
-                    > tonic::server::UnaryService<super::LeaderRequest>
-                    for GetLeaderSvc<T> {
+                    impl<T: ManagementService> tonic::server::UnaryService<super::LeaderRequest> for GetLeaderSvc<T> {
                         type Response = super::LeaderResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::LeaderRequest>,
@@ -776,25 +687,19 @@ pub mod management_service_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

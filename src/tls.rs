@@ -564,7 +564,7 @@ mod tests {
             pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
                 let certified_key = generate_simple_self_signed(vec!["Test CA".to_string()])?;
                 let cert_pem = certified_key.cert.pem();
-                let key_pem = certified_key.key_pair.serialize_pem();
+                let key_pem = certified_key.signing_key.serialize_pem();
 
                 Ok(Self {
                     cert: certified_key.cert,
@@ -580,9 +580,9 @@ mod tests {
             ) -> Result<TestCertificate, Box<dyn std::error::Error>> {
                 let certified_key = generate_simple_self_signed(san_names)?;
                 let cert_pem = certified_key.cert.pem();
-                let key_pem = certified_key.key_pair.serialize_pem();
+                let key_pem = certified_key.signing_key.serialize_pem();
                 let cert_der = certified_key.cert.der().to_vec();
-                let key_der = certified_key.key_pair.serialize_der();
+                let key_der = certified_key.signing_key.serialize_der();
 
                 Ok(TestCertificate {
                     cert: certified_key.cert,

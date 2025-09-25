@@ -4,10 +4,9 @@ use tonic::{Request, Response, Status};
 
 use crate::config::KvRequest as InternalKvRequest;
 use crate::grpc::kv::{
-    BatchSetRequest, BatchSetResponse, DeleteRequest, DeleteResponse, ExistsRequest,
-    ExistsResponse, GetRequest, GetResponse, ListKeysRequest, ListKeysResponse,
+    kv_service_server::KvService, BatchSetRequest, BatchSetResponse, DeleteRequest, DeleteResponse,
+    ExistsRequest, ExistsResponse, GetRequest, GetResponse, ListKeysRequest, ListKeysResponse,
     SetRequest, SetResponse,
-    kv_service_server::KvService,
 };
 use crate::network::management::ManagementApi;
 

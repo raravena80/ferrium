@@ -7,6 +7,7 @@ use crate::config::{NodeId, TypeConfig};
 use crate::grpc::raft::{
     // Import the oneof variants
     append_entries_response::Result as AppendEntriesResult,
+    raft_service_server::RaftService,
     AppendEntriesRequest as GrpcAppendEntriesRequest,
     AppendEntriesResponse as GrpcAppendEntriesResponse,
     AppendEntriesSuccess,
@@ -14,7 +15,6 @@ use crate::grpc::raft::{
     InstallSnapshotResponse as GrpcInstallSnapshotResponse,
     VoteRequest as GrpcVoteRequest,
     VoteResponse as GrpcVoteResponse,
-    raft_service_server::RaftService,
 };
 
 pub struct RaftServiceImpl {

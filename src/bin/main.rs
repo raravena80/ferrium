@@ -9,10 +9,10 @@ use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
 
 // gRPC imports
 use ferrium::grpc::{
-    services::{KvServiceImpl, ManagementServiceImpl, RaftServiceImpl},
     kv::kv_service_server::KvServiceServer,
     management::management_service_server::ManagementServiceServer,
     raft::raft_service_server::RaftServiceServer,
+    services::{KvServiceImpl, ManagementServiceImpl, RaftServiceImpl},
 };
 use tonic::transport::Server;
 

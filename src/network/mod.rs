@@ -348,7 +348,7 @@ pub mod management {
             self.raft
                 .add_learner(node_id, node, true)
                 .await
-                .map_err(|e| anyhow::anyhow!("Add learner failed: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Add learner failed: {e}"))?;
             Ok(())
         }
 
@@ -357,7 +357,7 @@ pub mod management {
                 .raft
                 .change_membership(members, false)
                 .await
-                .map_err(|e| anyhow::anyhow!("Change membership failed: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Change membership failed: {e}"))?;
             Ok(())
         }
 
@@ -370,7 +370,7 @@ pub mod management {
                 .raft
                 .client_write(req)
                 .await
-                .map_err(|e| anyhow::anyhow!("Failed to write: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to write: {e}"))?;
             Ok(response.data)
         }
 
@@ -378,7 +378,7 @@ pub mod management {
             self.raft
                 .ensure_linearizable()
                 .await
-                .map_err(|e| anyhow::anyhow!("Failed to ensure linearizability: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to ensure linearizability: {e}"))?;
 
             let req = KvRequest::Get {
                 key: key.to_string(),
@@ -391,7 +391,7 @@ pub mod management {
                         Ok(None)
                     }
                 }
-                Err(e) => Err(anyhow::anyhow!("Failed to read key {}: {}", key, e)),
+                Err(e) => Err(anyhow::anyhow!("Failed to read key {key}: {e}")),
             }
         }
 
@@ -466,10 +466,7 @@ pub mod management {
                         }
                         Err(e) => {
                             tracing::error!("❌ Failed to create TLS client config: {}", e);
-                            return Err(anyhow::anyhow!(
-                                "Failed to create TLS client config: {}",
-                                e
-                            ));
+                            return Err(anyhow::anyhow!("Failed to create TLS client config: {e}"));
                         }
                     }
                 }
@@ -481,7 +478,7 @@ pub mod management {
                     // If client build fails (e.g., rustls compatibility issue), try fallback for mTLS
                     if let Some(tls_config) = tls_config {
                         if tls_config.accept_invalid_certs && tls_config.client_cert.is_some() {
-                            tracing::warn!("⚠️  HTTP client build failed for mTLS discovery, falling back to permissive mode: {}", e);
+                            tracing::warn!("⚠️  HTTP client build failed for mTLS discovery, falling back to permissive mode: {e}");
                             let fallback_client = Client::builder()
                                 .timeout(Duration::from_secs(5))
                                 .danger_accept_invalid_certs(true)
@@ -489,17 +486,16 @@ pub mod management {
                                 .build()
                                 .map_err(|fallback_e| {
                                     anyhow::anyhow!(
-                                        "Failed to create fallback HTTP client: {}",
-                                        fallback_e
+                                        "Failed to create fallback HTTP client: {fallback_e}"
                                     )
                                 })?;
                             tracing::info!("🔓 Using permissive TLS fallback for mTLS discovery");
                             fallback_client
                         } else {
-                            return Err(anyhow::anyhow!("Failed to create HTTP client: {}", e));
+                            return Err(anyhow::anyhow!("Failed to create HTTP client: {e}"));
                         }
                     } else {
-                        return Err(anyhow::anyhow!("Failed to create HTTP client: {}", e));
+                        return Err(anyhow::anyhow!("Failed to create HTTP client: {e}"));
                     }
                 }
             };
@@ -553,22 +549,19 @@ pub mod management {
                                 }
                                 Err(e) => {
                                     tracing::debug!(
-                                        "Failed to parse leader response from {}: {}",
-                                        url,
-                                        e
+                                        "Failed to parse leader response from {url}: {e}"
                                     );
                                 }
                             }
                         }
                         Ok(response) => {
                             tracing::debug!(
-                                "Non-success response from {}: {}",
-                                url,
+                                "Non-success response from {url}: {}",
                                 response.status()
                             );
                         }
                         Err(e) => {
-                            tracing::debug!("Failed to contact peer {}: {}", url, e);
+                            tracing::debug!("Failed to contact peer {url}: {e}");
                         }
                     }
                 }
@@ -687,7 +680,7 @@ pub mod management {
                     }
                     Err(e) => {
                         tracing::error!("Failed to create TLS client config: {}", e);
-                        return Err(anyhow::anyhow!("Failed to create TLS client config: {}", e));
+                        return Err(anyhow::anyhow!("Failed to create TLS client config: {e}"));
                     }
                 }
             }
@@ -698,7 +691,7 @@ pub mod management {
                     // If client build fails (e.g., rustls compatibility issue), try fallback for mTLS
                     if let Some(tls_config) = tls_config {
                         if tls_config.accept_invalid_certs && tls_config.client_cert.is_some() {
-                            tracing::warn!("⚠️  HTTP client build failed for mTLS join request, falling back to permissive mode: {}", e);
+                            tracing::warn!("⚠️  HTTP client build failed for mTLS join request, falling back to permissive mode: {e}");
                             let fallback_client = Client::builder()
                                 .timeout(Duration::from_secs(10))
                                 .danger_accept_invalid_certs(true)
@@ -706,8 +699,7 @@ pub mod management {
                                 .build()
                                 .map_err(|fallback_e| {
                                     anyhow::anyhow!(
-                                        "Failed to create fallback HTTP client: {}",
-                                        fallback_e
+                                        "Failed to create fallback HTTP client: {fallback_e}"
                                     )
                                 })?;
                             tracing::info!(
@@ -715,10 +707,10 @@ pub mod management {
                             );
                             fallback_client
                         } else {
-                            return Err(anyhow::anyhow!("Failed to create HTTP client: {}", e));
+                            return Err(anyhow::anyhow!("Failed to create HTTP client: {e}"));
                         }
                     } else {
-                        return Err(anyhow::anyhow!("Failed to create HTTP client: {}", e));
+                        return Err(anyhow::anyhow!("Failed to create HTTP client: {e}"));
                     }
                 }
             };

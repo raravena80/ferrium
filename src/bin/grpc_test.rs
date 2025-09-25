@@ -4,9 +4,9 @@ use tonic::transport::Server;
 use tracing_subscriber::EnvFilter;
 
 use ferrium::grpc::{
-    services::{KvServiceImpl, ManagementServiceImpl},
     kv::kv_service_server::KvServiceServer,
     management::management_service_server::ManagementServiceServer,
+    services::{KvServiceImpl, ManagementServiceImpl},
 };
 use ferrium::{
     config::{create_raft_config, FerriumConfig, NodeId, RaftConfig},

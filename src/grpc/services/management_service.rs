@@ -3,11 +3,10 @@ use std::sync::Arc;
 use crate::{
     config::Node,
     grpc::management::{
-        AddLearnerRequest, AddLearnerResponse, ChangeMembershipRequest, ChangeMembershipResponse,
-        HealthRequest, HealthResponse, InitializeRequest, InitializeResponse, LeaderRequest,
-        LeaderResponse, MembershipConfig, MetricsRequest, MetricsResponse,
-        NodeInfo,
-        management_service_server::ManagementService,
+        management_service_server::ManagementService, AddLearnerRequest, AddLearnerResponse,
+        ChangeMembershipRequest, ChangeMembershipResponse, HealthRequest, HealthResponse,
+        InitializeRequest, InitializeResponse, LeaderRequest, LeaderResponse, MembershipConfig,
+        MetricsRequest, MetricsResponse, NodeInfo,
     },
     network::management::ManagementApi,
 };

@@ -37,6 +37,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "prost-types"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "tonic"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tonic-build"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

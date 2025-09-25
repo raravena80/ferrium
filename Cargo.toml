@@ -44,7 +44,7 @@ byteorder = "1.4"
 
 # gRPC dependencies
 tonic = { version = "0.14", features = ["tls-native-roots"] }
-prost = "0.13"
+prost = "0.14"
 tokio-stream = "0.1"
 tower = "0.5"
 

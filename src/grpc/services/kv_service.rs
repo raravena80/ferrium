@@ -3,10 +3,11 @@ use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
 use crate::config::KvRequest as InternalKvRequest;
-use crate::grpc::{
+use crate::grpc::kv::{
     BatchSetRequest, BatchSetResponse, DeleteRequest, DeleteResponse, ExistsRequest,
-    ExistsResponse, GetRequest, GetResponse, KvServiceTrait, ListKeysRequest, ListKeysResponse,
+    ExistsResponse, GetRequest, GetResponse, ListKeysRequest, ListKeysResponse,
     SetRequest, SetResponse,
+    kv_service_server::KvService,
 };
 use crate::network::management::ManagementApi;
 
@@ -21,7 +22,7 @@ impl KvServiceImpl {
 }
 
 #[tonic::async_trait]
-impl KvServiceTrait for KvServiceImpl {
+impl KvService for KvServiceImpl {
     async fn set(&self, request: Request<SetRequest>) -> Result<Response<SetResponse>, Status> {
         let req = request.into_inner();
 

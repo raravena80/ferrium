@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use crate::{
     config::Node,
-    grpc::{
+    grpc::management::{
         AddLearnerRequest, AddLearnerResponse, ChangeMembershipRequest, ChangeMembershipResponse,
         HealthRequest, HealthResponse, InitializeRequest, InitializeResponse, LeaderRequest,
-        LeaderResponse, ManagementServiceTrait, MembershipConfig, MetricsRequest, MetricsResponse,
+        LeaderResponse, MembershipConfig, MetricsRequest, MetricsResponse,
         NodeInfo,
+        management_service_server::ManagementService,
     },
     network::management::ManagementApi,
 };
@@ -23,7 +24,7 @@ impl ManagementServiceImpl {
 }
 
 #[tonic::async_trait]
-impl ManagementServiceTrait for ManagementServiceImpl {
+impl ManagementService for ManagementServiceImpl {
     async fn initialize(
         &self,
         _request: Request<InitializeRequest>,

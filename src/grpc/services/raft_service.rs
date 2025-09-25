@@ -4,7 +4,7 @@ use openraft::Raft;
 use tonic::{Request, Response, Status};
 
 use crate::config::{NodeId, TypeConfig};
-use crate::grpc::{
+use crate::grpc::raft::{
     // Import the oneof variants
     append_entries_response::Result as AppendEntriesResult,
     AppendEntriesRequest as GrpcAppendEntriesRequest,
@@ -12,9 +12,9 @@ use crate::grpc::{
     AppendEntriesSuccess,
     InstallSnapshotRequest as GrpcInstallSnapshotRequest,
     InstallSnapshotResponse as GrpcInstallSnapshotResponse,
-    RaftServiceTrait,
     VoteRequest as GrpcVoteRequest,
     VoteResponse as GrpcVoteResponse,
+    raft_service_server::RaftService,
 };
 
 pub struct RaftServiceImpl {
@@ -28,7 +28,7 @@ impl RaftServiceImpl {
 }
 
 #[tonic::async_trait]
-impl RaftServiceTrait for RaftServiceImpl {
+impl RaftService for RaftServiceImpl {
     async fn append_entries(
         &self,
         request: Request<GrpcAppendEntriesRequest>,

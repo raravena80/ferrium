@@ -1,6 +1,8 @@
 use ferrium::grpc::{
-    kv_service_client::KvServiceClient, management_service_client::ManagementServiceClient,
-    GetRequest, HealthRequest, InitializeRequest, SetRequest,
+    kv::kv_service_client::KvServiceClient,
+    management::management_service_client::ManagementServiceClient,
+    kv::{GetRequest, SetRequest},
+    management::{HealthRequest, InitializeRequest},
 };
 
 #[tokio::main]

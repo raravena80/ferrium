@@ -18,7 +18,7 @@ name = "grpc-client-test"
 path = "src/bin/grpc_client_test.rs"
 
 [build-dependencies]
-tonic-build = "0.14"
+tonic-build = "0.13"
 protoc-prebuilt = "0.3"
 
 [dependencies]
@@ -43,7 +43,7 @@ async-trait = "0.1"
 byteorder = "1.4"
 
 # gRPC dependencies
-tonic = { version = "0.14", features = ["tls-native-roots"] }
+tonic = { version = "0.13", features = ["tls-native-roots"] }
 prost = "0.13"
 tokio-stream = "0.1"
 tower = "0.5"

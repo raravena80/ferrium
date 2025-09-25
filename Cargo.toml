@@ -18,7 +18,7 @@ name = "grpc-client-test"
 path = "src/bin/grpc_client_test.rs"
 
 [build-dependencies]
-tonic-build = "0.13"
+tonic-build = "0.14"
 protoc-prebuilt = "0.3"
 
 [dependencies]

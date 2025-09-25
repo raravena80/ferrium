@@ -31,6 +31,12 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "rocksdb"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "prost"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prost-build"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prost-types"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -42,9 +48,9 @@ updates:
       timezone: "Etc/UTC"
     open-pull-requests-limit: 3
     reviewers:
-      - "your-username"
+      - "raravena80"
     assignees:
-      - "your-username"
+      - "raravena80"
     commit-message:
       prefix: "ci"
       include: "scope"

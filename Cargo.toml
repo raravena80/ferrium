@@ -50,7 +50,7 @@ tower = "0.5"
 
 # Configuration
 toml = "0.9"
-serde_with = "3.0"
+serde_with = "3.15"
 dirs = "6.0"
 
 # Optional test certificate generation

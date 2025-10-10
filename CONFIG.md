@@ -238,11 +238,11 @@ http_addr = "0.0.0.0:8001"
 
 ## Best Practices
 
-1. **Use configuration files** for complex deployments
-2. **Version control** your configuration files
-3. **Validate configurations** before deployment
-4. **Use CLI overrides** for environment-specific values
-5. **Monitor resource usage** and tune accordingly
-6. **Test configurations** in staging environments
-7. **Use structured logging** in production
+1. **Use configuration files**for complex deployments
+2. **Version control**your configuration files
+3. **Validate configurations**before deployment
+4. **Use CLI overrides**for environment-specific values
+5. **Monitor resource usage**and tune accordingly
+6. **Test configurations**in staging environments
+7. **Use structured logging**in production
 8. **Enable TLS** for production deployments 

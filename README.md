@@ -531,19 +531,19 @@ ferrium-server --config production.toml --log-level debug --format json
 
 ### Future Enhancements
 
-- [ ] **Advanced Features**
+**Advanced Features**
 - [ ] Multi-Raft support for sharding
 - [ ] Read replicas for scaling
 - [ ] Cross-datacenter replication
 - [ ] Built-in backup/restore
 
-- [ ] **Operations & Monitoring**
+**Operations & Monitoring**
 - [ ] Prometheus metrics export
 - [ ] Grafana dashboards
 - [ ] Alert manager integration
 - [ ] Automatic failover scripts
 
-- [ ] **Developer Experience**
+**Developer Experience**
 - [ ] Client SDKs (Python, Go, Java, JavaScript)
 - [ ] CLI management tool
 - [ ] Web UI for cluster management

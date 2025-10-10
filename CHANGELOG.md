@@ -29,14 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 - Updated to Rust 1.82+ compatibility
 - Updated major dependencies:
-  - actix-cors: 0.6 → 0.7
-  - toml: 0.8 → 0.9
-  - rocksdb: 0.21 → 0.23
-  - thiserror: 1.0 → 2.0
-  - tonic: 0.10 → 0.13
-  - reqwest: 0.11 → 0.12 (with rustls-tls)
-  - dirs: 5.0 → 6.0
-  - tower: 0.4 → 0.5
+- actix-cors: 0.6 → 0.7
+- toml: 0.8 → 0.9
+- rocksdb: 0.21 → 0.23
+- thiserror: 1.0 → 2.0
+- tonic: 0.10 → 0.13
+- reqwest: 0.11 → 0.12 (with rustls-tls)
+- dirs: 5.0 → 6.0
+- tower: 0.4 → 0.5
 
 ### Security
 - Added dependency vulnerability scanning

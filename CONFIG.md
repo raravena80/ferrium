@@ -5,19 +5,19 @@ Ferrium supports comprehensive configuration through TOML files, with full CLI o
 ## Quick Start
 
 1. **Generate default configuration:**
-   ```bash
-   ferrium-server --generate-config ferrium.toml
-   ```
+```bash
+ferrium-server --generate-config ferrium.toml
+```
 
 2. **Validate configuration:**
-   ```bash
-   ferrium-server --config ferrium.toml --validate-config
-   ```
+```bash
+ferrium-server --config ferrium.toml --validate-config
+```
 
 3. **Run with configuration:**
-   ```bash
-   ferrium-server --config ferrium.toml
-   ```
+```bash
+ferrium-server --config ferrium.toml
+```
 
 ## Configuration File Locations
 
@@ -38,96 +38,96 @@ ferrium-server --list-config-paths
 ### Node Configuration
 ```toml
 [node]
-id = 1                                    # Unique node identifier
-http_addr = "127.0.0.1:8001"            # HTTP API bind address
-grpc_addr = "127.0.0.1:9001"            # gRPC API bind address
-data_dir = "./data"                      # Data directory
-name = "ferrium-node-1"                 # Optional node name
-description = "Primary node"             # Optional description
+id = 1 # Unique node identifier
+http_addr = "127.0.0.1:8001" # HTTP API bind address
+grpc_addr = "127.0.0.1:9001" # gRPC API bind address
+data_dir = "./data" # Data directory
+name = "ferrium-node-1" # Optional node name
+description = "Primary node" # Optional description
 ```
 
 ### Network Configuration
 ```toml
 [network]
-request_timeout = 30000                  # Request timeout (ms)
-connect_timeout = 10000                  # Connection timeout (ms)
-keep_alive_interval = 60000              # Keep-alive interval (ms)
-max_retries = 3                          # Maximum retry attempts
-retry_delay = 100                        # Retry delay base (ms)
-enable_compression = true                # Enable network compression
-max_message_size = 4194304               # Max message size (bytes)
+request_timeout = 30000 # Request timeout (ms)
+connect_timeout = 10000 # Connection timeout (ms)
+keep_alive_interval = 60000 # Keep-alive interval (ms)
+max_retries = 3 # Maximum retry attempts
+retry_delay = 100 # Retry delay base (ms)
+enable_compression = true # Enable network compression
+max_message_size = 4194304 # Max message size (bytes)
 ```
 
 ### Storage Configuration
 ```toml
 [storage]
-enable_compression = true                # Enable data compression
-compaction_strategy = "level"            # "level", "universal", "fifo"
-max_log_size = 104857600                # Max log file size (bytes)
-log_retention_count = 10                 # Number of log files to keep
-enable_wal = true                        # Enable write-ahead logging
-sync_writes = false                      # Sync writes to disk
-block_cache_size = 64                    # Block cache size (MB)
-write_buffer_size = 64                   # Write buffer size (MB)
+enable_compression = true # Enable data compression
+compaction_strategy = "level" # "level", "universal", "fifo"
+max_log_size = 104857600 # Max log file size (bytes)
+log_retention_count = 10 # Number of log files to keep
+enable_wal = true # Enable write-ahead logging
+sync_writes = false # Sync writes to disk
+block_cache_size = 64 # Block cache size (MB)
+write_buffer_size = 64 # Write buffer size (MB)
 ```
 
 ### Raft Configuration
 ```toml
 [raft]
-heartbeat_interval = 250                 # Heartbeat interval (ms)
-election_timeout_min = 299               # Min election timeout (ms)
-election_timeout_max = 500               # Max election timeout (ms)
-max_append_entries = 100                 # Max entries per request
-enable_auto_compaction = true            # Enable auto log compaction
-compaction_threshold = 1000              # Compaction threshold
-max_inflight_requests = 10               # Max concurrent requests
+heartbeat_interval = 250 # Heartbeat interval (ms)
+election_timeout_min = 299 # Min election timeout (ms)
+election_timeout_max = 500 # Max election timeout (ms)
+max_append_entries = 100 # Max entries per request
+enable_auto_compaction = true # Enable auto log compaction
+compaction_threshold = 1000 # Compaction threshold
+max_inflight_requests = 10 # Max concurrent requests
 
 [raft.snapshot_policy]
-enable_auto_snapshot = true              # Enable automatic snapshots
-entries_since_last_snapshot = 1000       # Entries before snapshot
-snapshot_interval = 300000               # Snapshot interval (ms)
+enable_auto_snapshot = true # Enable automatic snapshots
+entries_since_last_snapshot = 1000 # Entries before snapshot
+snapshot_interval = 300000 # Snapshot interval (ms)
 ```
 
 ### Logging Configuration
 ```toml
 [logging]
-level = "info"                          # "trace", "debug", "info", "warn", "error"
-format = "pretty"                       # "json", "pretty", "compact"
-structured = false                      # Enable structured logging
-file_path = "./logs/ferrium.log"        # Log file path (optional)
-max_file_size = 104857600               # Max log file size (bytes)
-max_files = 5                           # Number of log files to keep
-enable_colors = true                    # Enable ANSI colors
+level = "info" # "trace", "debug", "info", "warn", "error"
+format = "pretty" # "json", "pretty", "compact"
+structured = false # Enable structured logging
+file_path = "./logs/ferrium.log" # Log file path (optional)
+max_file_size = 104857600 # Max log file size (bytes)
+max_files = 5 # Number of log files to keep
+enable_colors = true # Enable ANSI colors
 ```
 
 ### Cluster Configuration
 ```toml
 [cluster]
-name = "ferrium-cluster"                # Cluster name
-expected_size = 3                       # Expected cluster size
+name = "ferrium-cluster" # Cluster name
+expected_size = 3 # Expected cluster size
 
 # Define peer nodes
 [cluster.peers.2]
 http_addr = "10.0.1.11:8001"
 grpc_addr = "10.0.1.11:9001"
-priority = 90                           # Election priority
-voting = true                           # Voting member
+priority = 90 # Election priority
+voting = true # Voting member
 
 [cluster.discovery]
-enabled = false                         # Enable peer discovery
-method = "static"                       # "static", "dns", "consul", etc.
-interval = 30000                        # Discovery interval (ms)
+enabled = false # Enable peer discovery
+method = "static" # "static", "dns", "consul", etc.
+interval = 30000 # Discovery interval (ms)
 ```
 
 ### Security Configuration
 ```toml
 [security]
-enable_tls = true                       # Enable TLS
+enable_tls = true # Enable TLS
 cert_file = "/etc/ferrium/tls/server.crt"
 key_file = "/etc/ferrium/tls/server.key"
 ca_file = "/etc/ferrium/tls/ca.crt"
-enable_mtls = true                      # Enable mutual TLS
-auth_method = "certificate"             # "none", "token", "certificate", "jwt"
+enable_mtls = true # Enable mutual TLS
+auth_method = "certificate" # "none", "token", "certificate", "jwt"
 ```
 
 ## CLI Overrides
@@ -227,13 +227,13 @@ CMD ["ferrium-server", "--config", "/etc/ferrium/config.toml"]
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ferrium-config
+name: ferrium-config
 data:
-  config.toml: |
-    [node]
-    id = 1
-    http_addr = "0.0.0.0:8001"
-    # ... rest of config
+config.toml: |
+[node]
+id = 1
+http_addr = "0.0.0.0:8001"
+# ... rest of config
 ```
 
 ## Best Practices

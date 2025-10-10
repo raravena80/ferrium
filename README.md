@@ -1,66 +1,66 @@
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo.svg">
-    <img src="docs/assets/logo.svg" alt="Ferrium Logo" width="400"/>
-  </picture>
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+<source media="(prefers-color-scheme: light)" srcset="docs/assets/logo.svg">
+<img src="docs/assets/logo.svg" alt="Ferrium Logo" width="400"/>
+</picture>
 
-  <br/>
+<br/>
 
-  <strong>Enterprise Distributed KV Storage with Raft Consensus</strong>
+<strong>Enterprise Distributed KV Storage with Raft Consensus</strong>
 
-  <br/><br/>
+<br/><br/>
 
-  <p>
-    <a href="#-features">Features</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-configuration-system">Configuration</a> •
-    <a href="#-api-reference">API</a> •
-    <a href="#-deployment-examples">Deploy</a> •
-    <a href="#-architecture">Architecture</a>
-  </p>
+<p>
+<a href="#-features">Features</a> •
+<a href="#-quick-start">Quick Start</a> •
+<a href="#-configuration-system">Configuration</a> •
+<a href="#-api-reference">API</a> •
+<a href="#-deployment-examples">Deploy</a> •
+<a href="#-architecture">Architecture</a>
+</p>
 
-  <p>
-    <img src="https://img.shields.io/badge/language-Rust-orange?style=flat-square&logo=rust" alt="Rust"/>
-    <img src="https://img.shields.io/badge/consensus-Raft-blue?style=flat-square" alt="Raft"/>
-    <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green?style=flat-square" alt="License"/>
-    <img src="https://img.shields.io/badge/status-Production%20Ready-success?style=flat-square" alt="Status"/>
-  </p>
+<p>
+<img src="https://img.shields.io/badge/language-Rust-orange?style=flat-square&logo=rust" alt="Rust"/>
+<img src="https://img.shields.io/badge/consensus-Raft-blue?style=flat-square" alt="Raft"/>
+<img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green?style=flat-square" alt="License"/>
+<img src="https://img.shields.io/badge/status-Production%20Ready-success?style=flat-square" alt="Status"/>
+</p>
 </div>
 
 ---
 
 Ferrium is a production-ready distributed key-value storage system built in Rust using the [openraft](https://github.com/databendlabs/openraft) consensus library. It provides strong consistency guarantees similar to etcd or Consul, with comprehensive configuration management and dual-protocol support (HTTP + gRPC).
 
-## ✨ Features
+## Features
 
-### 🏗️ **Core Distributed System**
+### Core Distributed System
 - **Raft Consensus Protocol**: Built on openraft for strong consistency and fault tolerance
 - **Persistent Storage**: RocksDB-based storage with automatic snapshots and log compaction
 - **Dynamic Membership**: Add/remove nodes without downtime
 - **Leader Election**: Automatic failover with configurable timeouts
 - **Linearizable Reads**: Strong consistency guarantees for all operations
 
-### 🌐 **Dual-Protocol APIs**
+### Dual-Protocol APIs
 - **HTTP REST API**: Human-friendly RESTful interface for web integration
 - **gRPC API**: High-performance binary protocol for service-to-service communication
 - **Automatic Protocol Detection**: Choose the best protocol for your use case
 
-### ⚙️ **Enterprise Configuration System**
+### Enterprise Configuration System
 - **TOML Configuration Files**: Comprehensive settings management
 - **CLI Override Support**: Environment-specific parameter overrides
 - **Multiple Config Locations**: Automatic discovery from standard paths
 - **Configuration Validation**: Extensive validation with helpful error messages
 - **Hot Configuration**: Runtime configuration updates (where applicable)
 
-### 🚀 **Production-Ready Operations**
+### Production-Ready Operations
 - **Performance Tuning**: Optimized configurations for different workload patterns
 - **Security**: TLS/mTLS support with multiple authentication methods
 - **Monitoring**: Rich metrics and structured logging
 - **Health Checks**: Comprehensive health and readiness endpoints
 - **Deployment Ready**: Docker, Kubernetes, and systemd integration examples
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Build Ferrium
 
@@ -97,7 +97,7 @@ cargo build --release
 ./target/release/ferrium-server --config node2.toml --id 2 --http-addr 10.0.1.11:8001
 ```
 
-## 📋 Configuration System
+## Configuration System
 
 Ferrium features a comprehensive configuration system supporting every aspect of the distributed system.
 
@@ -121,13 +121,13 @@ Ferrium features a comprehensive configuration system supporting every aspect of
 
 The configuration covers all operational aspects:
 
-- **🖥️ Node**: ID, addresses, data directory, metadata
-- **🌐 Network**: Timeouts, retries, compression, message limits
-- **💾 Storage**: Compression, compaction, caching, durability settings
-- **🗳️ Raft**: Consensus parameters, election timeouts, batch sizes
-- **📊 Logging**: Levels, formats, rotation, structured logging
-- **👥 Cluster**: Peer discovery, membership, priorities
-- **🔒 Security**: TLS/mTLS, authentication, certificates
+- **️ Node**: ID, addresses, data directory, metadata
+- ** Network**: Timeouts, retries, compression, message limits
+- ** Storage**: Compression, compaction, caching, durability settings
+- **️ Raft**: Consensus parameters, election timeouts, batch sizes
+- ** Logging**: Levels, formats, rotation, structured logging
+- ** Cluster**: Peer discovery, membership, priorities
+- ** Security**: TLS/mTLS, authentication, certificates
 
 ### Example Configurations
 
@@ -135,9 +135,9 @@ The configuration covers all operational aspects:
 - **`examples/configs/cluster-node1.toml`** - Production cluster setup
 - **`examples/configs/high-performance.toml`** - Optimized for throughput
 
-📖 **See [CONFIG.md](CONFIG.md) for comprehensive configuration documentation**
+**See [CONFIG.md](CONFIG.md) for comprehensive configuration documentation**
 
-## 🌐 API Reference
+## API Reference
 
 Ferrium provides both HTTP and gRPC APIs for maximum flexibility.
 
@@ -148,18 +148,18 @@ Ferrium provides both HTTP and gRPC APIs for maximum flexibility.
 ```bash
 # Write a key-value pair
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"Set":{"key":"mykey","value":"myvalue"}}' \
-  http://127.0.0.1:8001/write
+-d '{"Set":{"key":"mykey","value":"myvalue"}}' \
+http://127.0.0.1:8001/write
 
 # Read a value
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"key":"mykey"}' \
-  http://127.0.0.1:8001/read
+-d '{"key":"mykey"}' \
+http://127.0.0.1:8001/read
 
 # Delete a key
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"Delete":{"key":"mykey"}}' \
-  http://127.0.0.1:8001/write
+-d '{"Delete":{"key":"mykey"}}' \
+http://127.0.0.1:8001/write
 ```
 
 #### Cluster Management
@@ -184,13 +184,13 @@ curl http://127.0.0.1:8001/leader
 ```bash
 # Add learner node
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"node_id":2,"rpc_addr":"127.0.0.1:8002","api_addr":"127.0.0.1:8002"}' \
-  http://127.0.0.1:8001/add-learner
+-d '{"node_id":2,"rpc_addr":"127.0.0.1:8002","api_addr":"127.0.0.1:8002"}' \
+http://127.0.0.1:8001/add-learner
 
 # Change cluster membership
 curl -X POST -H "Content-Type: application/json" \
-  -d '[1,2,3]' \
-  http://127.0.0.1:8001/change-membership
+-d '[1,2,3]' \
+http://127.0.0.1:8001/change-membership
 ```
 
 ### gRPC API
@@ -207,7 +207,7 @@ The gRPC API provides the same functionality with better performance for service
 - **ManagementService**: Cluster management and health
 - **RaftService**: Internal Raft consensus operations
 
-## 🎯 Deployment Examples
+## Deployment Examples
 
 ### Development (Single Node)
 
@@ -232,62 +232,62 @@ CMD ["ferrium-server", "--config", "/etc/ferrium/config.toml"]
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ferrium-config
+name: ferrium-config
 data:
-  config.toml: |
-    [node]
-    id = 1
-    http_addr = "0.0.0.0:8001"
-    grpc_addr = "0.0.0.0:9001"
-    data_dir = "/data"
+config.toml: |
+[node]
+id = 1
+http_addr = "0.0.0.0:8001"
+grpc_addr = "0.0.0.0:9001"
+data_dir = "/data"
 
-    [logging]
-    level = "info"
-    format = "json"
-    structured = true
+[logging]
+level = "info"
+format = "json"
+structured = true
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: ferrium
+name: ferrium
 spec:
-  serviceName: ferrium
-  replicas: 3
-  selector:
-    matchLabels:
-      app: ferrium
-  template:
-    metadata:
-      labels:
-        app: ferrium
-    spec:
-      containers:
-      - name: ferrium
-        image: ferrium:latest
-        command: ["ferrium-server"]
-        args: ["--config", "/etc/ferrium/config.toml"]
-        ports:
-        - containerPort: 8001
-          name: http
-        - containerPort: 9001
-          name: grpc
-        volumeMounts:
-        - name: config
-          mountPath: /etc/ferrium
-        - name: data
-          mountPath: /data
-      volumes:
-      - name: config
-        configMap:
-          name: ferrium-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests:
-          storage: 10Gi
+serviceName: ferrium
+replicas: 3
+selector:
+matchLabels:
+app: ferrium
+template:
+metadata:
+labels:
+app: ferrium
+spec:
+containers:
+- name: ferrium
+image: ferrium:latest
+command: ["ferrium-server"]
+args: ["--config", "/etc/ferrium/config.toml"]
+ports:
+- containerPort: 8001
+name: http
+- containerPort: 9001
+name: grpc
+volumeMounts:
+- name: config
+mountPath: /etc/ferrium
+- name: data
+mountPath: /data
+volumes:
+- name: config
+configMap:
+name: ferrium-config
+volumeClaimTemplates:
+- metadata:
+name: data
+spec:
+accessModes: ["ReadWriteOnce"]
+resources:
+requests:
+storage: 10Gi
 ```
 
 ### Systemd Service
@@ -317,54 +317,54 @@ ReadWritePaths=/var/lib/ferrium /var/log/ferrium
 WantedBy=multi-user.target
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 
 ```
-┌─────────────────┐    ┌─────────────────┐
-│   HTTP REST     │    │      gRPC       │
-│      API        │    │       API       │
-└─────────────────┘    └─────────────────┘
-         │                       │
-         └───────────┬───────────┘
-                     │
-         ┌─────────────────────────────┐
-         │    Management Layer         │
-         │  (Cluster & Operations)     │
-         └─────────────────────────────┘
-                     │
-         ┌─────────────────────────────┐
-         │       Raft Engine           │
-         │    (openraft-based)         │
-         └─────────────────────────────┘
-                     │
-         ┌─────────────────────────────┐
-         │    Storage Engine           │
-         │   (RocksDB-based)           │
-         └─────────────────────────────┘
+
+HTTP REST gRPC 
+API API 
+
+
+
+
+
+Management Layer 
+(Cluster & Operations) 
+
+
+
+Raft Engine 
+(openraft-based) 
+
+
+
+Storage Engine 
+(RocksDB-based) 
+
 ```
 
 ### Key Design Features
 
-1. **🔧 Configuration-Driven**: Every aspect configurable via TOML files
-2. **🌐 Protocol Agnostic**: HTTP for humans, gRPC for services
-3. **⚡ Performance Optimized**: Configurable caching, batching, compression
-4. **🛡️ Security First**: Built-in TLS, authentication, and authorization
-5. **🔍 Observability**: Rich metrics, structured logging, health checks
-6. **📦 Cloud Native**: Kubernetes-ready with proper resource management
+1. ** Configuration-Driven**: Every aspect configurable via TOML files
+2. ** Protocol Agnostic**: HTTP for humans, gRPC for services
+3. ** Performance Optimized**: Configurable caching, batching, compression
+4. ** Security First**: Built-in TLS, authentication, and authorization
+5. ** Observability**: Rich metrics, structured logging, health checks
+6. ** Cloud Native**: Kubernetes-ready with proper resource management
 
 ### Solving OpenRaft Complexity
 
 Ferrium addresses common openraft challenges:
 
-- **✅ Sealed Traits**: Comprehensive `TypeConfig` implementation
-- **✅ Complex Generics**: Simplified through well-defined type bounds
-- **✅ Storage Abstraction**: Clean RocksDB integration with proper error handling
-- **✅ Network Layer**: HTTP-based communication with automatic retries
-- **✅ Configuration**: All Raft parameters tunable via config files
+- ** Sealed Traits**: Comprehensive `TypeConfig` implementation
+- ** Complex Generics**: Simplified through well-defined type bounds
+- ** Storage Abstraction**: Clean RocksDB integration with proper error handling
+- ** Network Layer**: HTTP-based communication with automatic retries
+- ** Configuration**: All Raft parameters tunable via config files
 
-## 📊 Performance & Tuning
+## Performance & Tuning
 
 ### Performance Profiles
 
@@ -412,11 +412,11 @@ watch -n 1 'curl -s http://127.0.0.1:8001/health | jq'
 
 # Check leader status across nodes
 for port in 8001 8002 8003; do
-  echo "Node $port: $(curl -s http://127.0.0.1:$port/is-leader)"
+echo "Node $port: $(curl -s http://127.0.0.1:$port/is-leader)"
 done
 ```
 
-## 🛠️ Development & Testing
+## Development & Testing
 
 ### Running Tests
 
@@ -448,33 +448,33 @@ cargo test --test integration
 
 ```
 src/
-├── bin/
-│   ├── main.rs              # Server binary with config system
-│   ├── grpc_test.rs         # gRPC API test client
-│   └── grpc_client_test.rs  # gRPC integration tests
-├── lib.rs                   # Library root
-├── config/                  # Configuration system
-│   └── mod.rs              # TOML config, validation, CLI
-├── storage/                 # Storage layer
-│   └── mod.rs              # RocksDB integration
-├── network/                 # Network & API layer
-│   ├── mod.rs              # HTTP network + management API
-│   └── client.rs           # HTTP client library
-└── grpc/                   # gRPC implementation
-    ├── mod.rs              # Proto definitions
-    └── services/           # gRPC service implementations
+bin/
+main.rs # Server binary with config system
+grpc_test.rs # gRPC API test client
+grpc_client_test.rs # gRPC integration tests
+lib.rs # Library root
+config/ # Configuration system
+mod.rs # TOML config, validation, CLI
+storage/ # Storage layer
+mod.rs # RocksDB integration
+network/ # Network & API layer
+mod.rs # HTTP network + management API
+client.rs # HTTP client library
+grpc/ # gRPC implementation
+mod.rs # Proto definitions
+services/ # gRPC service implementations
 examples/
-├── configs/                 # Example configurations
-│   ├── single-node.toml    # Development setup
-│   ├── cluster-node1.toml  # Production cluster
-│   └── high-performance.toml # Performance-optimized
-proto/                       # Protocol buffer definitions
-├── kv.proto                # KV service definitions
-├── management.proto        # Management service
-└── raft.proto             # Raft internal protocols
+configs/ # Example configurations
+single-node.toml # Development setup
+cluster-node1.toml # Production cluster
+high-performance.toml # Performance-optimized
+proto/ # Protocol buffer definitions
+kv.proto # KV service definitions
+management.proto # Management service
+raft.proto # Raft internal protocols
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -517,9 +517,9 @@ RUST_LOG=ferrium=debug,openraft=debug ferrium-server --config debug.toml
 ferrium-server --config production.toml --log-level debug --format json
 ```
 
-## 📈 Roadmap
+## Roadmap
 
-### Current Status: ✅ Production Ready
+### Current Status: Production Ready
 
 - [x] Raft consensus implementation
 - [x] Persistent storage with RocksDB
@@ -532,24 +532,24 @@ ferrium-server --config production.toml --log-level debug --format json
 ### Future Enhancements
 
 - [ ] **Advanced Features**
-  - [ ] Multi-Raft support for sharding
-  - [ ] Read replicas for scaling
-  - [ ] Cross-datacenter replication
-  - [ ] Built-in backup/restore
+- [ ] Multi-Raft support for sharding
+- [ ] Read replicas for scaling
+- [ ] Cross-datacenter replication
+- [ ] Built-in backup/restore
 
 - [ ] **Operations & Monitoring**
-  - [ ] Prometheus metrics export
-  - [ ] Grafana dashboards
-  - [ ] Alert manager integration
-  - [ ] Automatic failover scripts
+- [ ] Prometheus metrics export
+- [ ] Grafana dashboards
+- [ ] Alert manager integration
+- [ ] Automatic failover scripts
 
 - [ ] **Developer Experience**
-  - [ ] Client SDKs (Python, Go, Java, JavaScript)
-  - [ ] CLI management tool
-  - [ ] Web UI for cluster management
-  - [ ] Migration tools from other KV stores
+- [ ] Client SDKs (Python, Go, Java, JavaScript)
+- [ ] CLI management tool
+- [ ] Web UI for cluster management
+- [ ] Migration tools from other KV stores
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our contributing guidelines:
 
@@ -575,7 +575,7 @@ cargo install cargo-nextest
 cargo watch -x "nextest run"
 ```
 
-## 🎨 Logo & Branding
+## Logo & Branding
 
 The Ferrium logo is available in multiple formats for different use cases:
 
@@ -598,11 +598,11 @@ The Ferrium logo is available in multiple formats for different use cases:
 
 The logo combines the iron/metal theme (Ferrium = iron) with distributed systems concepts, featuring connected nodes and modern gradients that represent the robust, interconnected nature of the system. The subtitle uses high-contrast colors to ensure readability against the metal accent elements.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT OR Apache-2.0 license.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **[openraft](https://github.com/databendlabs/openraft)** - Robust Raft consensus implementation
 - **[RocksDB](https://rocksdb.org/)** - High-performance storage engine
@@ -613,6 +613,6 @@ This project is licensed under the MIT OR Apache-2.0 license.
 
 ---
 
-**📖 For detailed configuration options, see [CONFIG.md](CONFIG.md)**
+** For detailed configuration options, see [CONFIG.md](CONFIG.md)**
 
-**🚀 Ready to build distributed systems? Start with `ferrium-server --generate-config ferrium.toml`**
+** Ready to build distributed systems? Start with `ferrium-server --generate-config ferrium.toml`**

@@ -122,12 +122,12 @@ Ferrium features a comprehensive configuration system supporting every aspect of
 The configuration covers all operational aspects:
 
 - **️ Node**: ID, addresses, data directory, metadata
-- ** Network**: Timeouts, retries, compression, message limits
-- ** Storage**: Compression, compaction, caching, durability settings
+- **Network**: Timeouts, retries, compression, message limits
+- **Storage**: Compression, compaction, caching, durability settings
 - **️ Raft**: Consensus parameters, election timeouts, batch sizes
-- ** Logging**: Levels, formats, rotation, structured logging
-- ** Cluster**: Peer discovery, membership, priorities
-- ** Security**: TLS/mTLS, authentication, certificates
+- **Logging**: Levels, formats, rotation, structured logging
+- **Cluster**: Peer discovery, membership, priorities
+- **Security**: TLS/mTLS, authentication, certificates
 
 ### Example Configurations
 
@@ -347,22 +347,22 @@ WantedBy=multi-user.target
 
 ### Key Design Features
 
-1. ** Configuration-Driven**: Every aspect configurable via TOML files
-2. ** Protocol Agnostic**: HTTP for humans, gRPC for services
-3. ** Performance Optimized**: Configurable caching, batching, compression
-4. ** Security First**: Built-in TLS, authentication, and authorization
-5. ** Observability**: Rich metrics, structured logging, health checks
-6. ** Cloud Native**: Kubernetes-ready with proper resource management
+1. **Configuration-Driven**: Every aspect configurable via TOML files
+2. **Protocol Agnostic**: HTTP for humans, gRPC for services
+3. **Performance Optimized**: Configurable caching, batching, compression
+4. **Security First**: Built-in TLS, authentication, and authorization
+5. **Observability**: Rich metrics, structured logging, health checks
+6. **Cloud Native**: Kubernetes-ready with proper resource management
 
 ### Solving OpenRaft Complexity
 
 Ferrium addresses common openraft challenges:
 
-- ** Sealed Traits**: Comprehensive `TypeConfig` implementation
-- ** Complex Generics**: Simplified through well-defined type bounds
-- ** Storage Abstraction**: Clean RocksDB integration with proper error handling
-- ** Network Layer**: HTTP-based communication with automatic retries
-- ** Configuration**: All Raft parameters tunable via config files
+- **Sealed Traits**: Comprehensive `TypeConfig` implementation
+- **Complex Generics**: Simplified through well-defined type bounds
+- **Storage Abstraction**: Clean RocksDB integration with proper error handling
+- **Network Layer**: HTTP-based communication with automatic retries
+- **Configuration**: All Raft parameters tunable via config files
 
 ## Performance & Tuning
 
@@ -448,30 +448,30 @@ cargo test --test integration
 
 ```
 src/
-bin/
-main.rs # Server binary with config system
-grpc_test.rs # gRPC API test client
-grpc_client_test.rs # gRPC integration tests
-lib.rs # Library root
-config/ # Configuration system
-mod.rs # TOML config, validation, CLI
-storage/ # Storage layer
-mod.rs # RocksDB integration
-network/ # Network & API layer
-mod.rs # HTTP network + management API
-client.rs # HTTP client library
-grpc/ # gRPC implementation
-mod.rs # Proto definitions
-services/ # gRPC service implementations
+├── bin/
+│   ├── main.rs              # Server binary with config system
+│   ├── grpc_test.rs         # gRPC API test client
+│   └── grpc_client_test.rs  # gRPC integration tests
+├── lib.rs                   # Library root
+├── config/                  # Configuration system
+│   └── mod.rs              # TOML config, validation, CLI
+├── storage/                 # Storage layer
+│   └── mod.rs              # RocksDB integration
+├── network/                 # Network & API layer
+│   ├── mod.rs              # HTTP network + management API
+│   └── client.rs           # HTTP client library
+└── grpc/                   # gRPC implementation
+    ├── mod.rs              # Proto definitions
+    └── services/           # gRPC service implementations
 examples/
-configs/ # Example configurations
-single-node.toml # Development setup
-cluster-node1.toml # Production cluster
-high-performance.toml # Performance-optimized
-proto/ # Protocol buffer definitions
-kv.proto # KV service definitions
-management.proto # Management service
-raft.proto # Raft internal protocols
+├── configs/                 # Example configurations
+│   ├── single-node.toml    # Development setup
+│   ├── cluster-node1.toml  # Production cluster
+│   └── high-performance.toml # Performance-optimized
+proto/                       # Protocol buffer definitions
+├── kv.proto                # KV service definitions
+├── management.proto        # Management service
+└── raft.proto             # Raft internal protocols
 ```
 
 ## Troubleshooting

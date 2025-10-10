@@ -322,27 +322,27 @@ WantedBy=multi-user.target
 ### Core Components
 
 ```
-
-HTTP REST gRPC 
-API API 
-
-
-
-
-
-Management Layer 
-(Cluster & Operations) 
-
-
-
-Raft Engine 
-(openraft-based) 
-
-
-
-Storage Engine 
-(RocksDB-based) 
-
+┌─────────────────┐    ┌─────────────────┐
+│   HTTP REST     │    │      gRPC       │
+│      API        │    │       API       │
+└─────────────────┘    └─────────────────┘
+         │                       │
+         └───────────┬───────────┘
+                     │
+         ┌─────────────────────────────┐
+         │    Management Layer         │
+         │  (Cluster & Operations)     │
+         └─────────────────────────────┘
+                     │
+         ┌─────────────────────────────┐
+         │       Raft Engine           │
+         │    (openraft-based)         │
+         └─────────────────────────────┘
+                     │
+         ┌─────────────────────────────┐
+         │    Storage Engine           │
+         │   (RocksDB-based)           │
+         └─────────────────────────────┘
 ```
 
 ### Key Design Features
@@ -448,30 +448,30 @@ cargo test --test integration
 
 ```
 src/
-bin/
-main.rs # Server binary with config system
-grpc_test.rs # gRPC API test client
-grpc_client_test.rs # gRPC integration tests
-lib.rs # Library root
-config/ # Configuration system
-mod.rs # TOML config, validation, CLI
-storage/ # Storage layer
-mod.rs # RocksDB integration
-network/ # Network & API layer
-mod.rs # HTTP network + management API
-client.rs # HTTP client library
-grpc/ # gRPC implementation
-mod.rs # Proto definitions
-services/ # gRPC service implementations
+├── bin/
+│   ├── main.rs              # Server binary with config system
+│   ├── grpc_test.rs         # gRPC API test client
+│   └── grpc_client_test.rs  # gRPC integration tests
+├── lib.rs                   # Library root
+├── config/                  # Configuration system
+│   └── mod.rs              # TOML config, validation, CLI
+├── storage/                 # Storage layer
+│   └── mod.rs              # RocksDB integration
+├── network/                 # Network & API layer
+│   ├── mod.rs              # HTTP network + management API
+│   └── client.rs           # HTTP client library
+└── grpc/                   # gRPC implementation
+    ├── mod.rs              # Proto definitions
+    └── services/           # gRPC service implementations
 examples/
-configs/ # Example configurations
-single-node.toml # Development setup
-cluster-node1.toml # Production cluster
-high-performance.toml # Performance-optimized
-proto/ # Protocol buffer definitions
-kv.proto # KV service definitions
-management.proto # Management service
-raft.proto # Raft internal protocols
+├── configs/                 # Example configurations
+│   ├── single-node.toml    # Development setup
+│   ├── cluster-node1.toml  # Production cluster
+│   └── high-performance.toml # Performance-optimized
+proto/                       # Protocol buffer definitions
+├── kv.proto                # KV service definitions
+├── management.proto        # Management service
+└── raft.proto             # Raft internal protocols
 ```
 
 ## Troubleshooting

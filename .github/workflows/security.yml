@@ -158,25 +158,27 @@ jobs:
 
     - name: Build with TLS features
       run: cargo build --release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run TLS configuration validation tests
       run: |
         echo "🔐 Running TLS configuration validation..."
-        cargo test tls_config_validation --verbose
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo test tls_config_validation --verbose
 
     - name: Run certificate validation tests
       run: |
         echo "🔐 Running certificate validation tests..."
-        cargo test --test tls_integration_tests test_tls_config_validation --verbose
-        cargo test --test tls_integration_tests test_invalid_certificate --verbose
-        cargo test --test tls_integration_tests test_certificate_loading --verbose
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo test --test tls_integration_tests test_tls_config_validation --verbose
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo test --test tls_integration_tests test_invalid_certificate --verbose
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo test --test tls_integration_tests test_certificate_loading --verbose
 
     - name: Validate TLS cipher suites and protocols
       run: |
         echo "🔐 Validating TLS security configuration..."
         # Build a temporary TLS server for validation
-        cargo build --release
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo build --release
         # Note: This would ideally use a security scanning tool
         # For now, we validate through our test suite
-        cargo test --test tls_integration_tests security --verbose || true
+        GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" cargo test --test tls_integration_tests security --verbose || true
 

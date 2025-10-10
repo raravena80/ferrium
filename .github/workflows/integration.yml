@@ -217,4 +217,5 @@ jobs:
         cargo +nightly miri test --lib -- --test-threads=1
       env:
         MIRIFLAGS: -Zmiri-disable-isolation
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

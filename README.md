@@ -322,27 +322,27 @@ WantedBy=multi-user.target
 ### Core Components
 
 ```
-
-HTTP REST gRPC 
-API API 
-
-
-
-
-
-Management Layer 
-(Cluster & Operations) 
-
-
-
-Raft Engine 
-(openraft-based) 
-
-
-
-Storage Engine 
-(RocksDB-based) 
-
+┌─────────────────┐    ┌─────────────────┐
+│   HTTP REST     │    │      gRPC       │
+│      API        │    │       API       │
+└─────────────────┘    └─────────────────┘
+         │                       │
+         └───────────┬───────────┘
+                     │
+         ┌─────────────────────────────┐
+         │    Management Layer         │
+         │  (Cluster & Operations)     │
+         └─────────────────────────────┘
+                     │
+         ┌─────────────────────────────┐
+         │       Raft Engine           │
+         │    (openraft-based)         │
+         └─────────────────────────────┘
+                     │
+         ┌─────────────────────────────┐
+         │    Storage Engine           │
+         │   (RocksDB-based)           │
+         └─────────────────────────────┘
 ```
 
 ### Key Design Features

@@ -288,6 +288,66 @@ spec:
       resources:
         requests:
           storage: 10Gi
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ferrium-config
+data:
+  config.toml: |
+    [node]
+    id = 1
+    http_addr = "0.0.0.0:8001"
+    grpc_addr = "0.0.0.0:9001"
+    data_dir = "/data"
+
+    [logging]
+    level = "info"
+    format = "json"
+    structured = true
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ferrium
+spec:
+  serviceName: ferrium
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ferrium
+  template:
+    metadata:
+      labels:
+        app: ferrium
+    spec:
+      containers:
+      - name: ferrium
+        image: ferrium:latest
+        command: ["ferrium-server"]
+        args: ["--config", "/etc/ferrium/config.toml"]
+        ports:
+        - containerPort: 8001
+          name: http
+        - containerPort: 9001
+          name: grpc
+        volumeMounts:
+        - name: config
+          mountPath: /etc/ferrium
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: config
+        configMap:
+          name: ferrium-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
 ```
 
 ### Systemd Service

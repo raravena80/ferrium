@@ -84,7 +84,7 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Run dependency policy check
-      run: cargo deny check
+      run: cargo deny check bans licenses sources
 
   unused-deps:
     name: Unused Dependencies

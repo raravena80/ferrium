@@ -27,13 +27,14 @@ wildcards = "allow"
 [advisories]
 # The path where the advisory database is cloned/fetched into
 db-path = "~/.cargo/advisory-db"
-# The url(s) of the advisory databases to use
-db-urls = ["https://github.com/rustsec/advisory-db"]
+# The url(s) of advisory databases to use
+# Temporarily disabled due to cargo-deny not supporting CVSS 4.0 format
+# See: https://github.com/rustsec/advisory-db/issues/...
+# db-urls = ["https://github.com/rustsec/advisory-db"]
+db-urls = []
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
-ignore = [
-    #"RUSTSEC-0000-0000",
-]
+ignore = []
 
 [sources]
 # Lint level for what to happen when a crate from a crate registry that is

@@ -323,7 +323,7 @@ jobs:
           org.opencontainers.image.version=${{ steps.get_version.outputs.version }}
           org.opencontainers.image.revision=${{ github.sha }}
     - name: Build and push Docker image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         platforms: ${{ matrix.platform }}
